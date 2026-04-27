@@ -6,7 +6,7 @@ Ushbu hujjat Frontend (yoki Mobil) dasturchilar uchun backend API'lari bilan qan
 > Barcha so'rovlar JSON formatida yuborilishi va qabul qilinishi kerak (`Content-Type: application/json`).
 
 ## ⚙️ Asosiy ma'lumotlar
-- **Base URL:** `http://localhost:9092/api/v1`
+- **Base URL:** `http://136.113.208.136/api/v1`
 - **Authentication:** JWT (Bearer Token)
 - **Token yuborish tartibi:** Har bir himoyalangan so'rovning Header qismida quyidagicha yuboriladi:
   `Authorization: Bearer <sizning_tokeningiz>`
@@ -21,7 +21,7 @@ Ushbu hujjat Frontend (yoki Mobil) dasturchilar uchun backend API'lari bilan qan
 ```json
 {
   "login": "admin",
-  "password": "123"
+  "password": "admin"
 }
 ```
 - **Javob (Response 200 OK):**

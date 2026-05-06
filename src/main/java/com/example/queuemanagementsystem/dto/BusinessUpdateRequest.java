@@ -1,6 +1,5 @@
 package com.example.queuemanagementsystem.dto;
 
-import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -25,6 +24,4 @@ public class BusinessUpdateRequest {
 
     @Size(max = 32)
     private String contactPhone;
-
-    private BusinessStatus status;
 }

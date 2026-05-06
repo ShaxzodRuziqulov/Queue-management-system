@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -52,6 +53,9 @@ public class AuthController {
     private LoginResponse buildLoginResponse(Authentication authentication) {
         String token = jwtService.createToken(authentication);
         long expiresInSeconds = TimeUnit.MILLISECONDS.toSeconds(securityProperties.getJwt().getExpirationMs());
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .toList();
         if (authentication.getPrincipal() instanceof AppUserPrincipal principal) {
             return LoginResponse.builder()
                     .accessToken(token)
@@ -60,6 +64,8 @@ public class AuthController {
                     .userId(principal.getId())
                     .login(principal.getLogin())
                     .businessOwner(principal.isBusinessOwner())
+                    .admin(principal.isAdmin())
+                    .roles(roles)
                     .build();
         }
         return LoginResponse.builder()
@@ -69,6 +75,8 @@ public class AuthController {
                 .userId(null)
                 .login(authentication.getName())
                 .businessOwner(false)
+                .admin(false)
+                .roles(roles)
                 .build();
     }
 }

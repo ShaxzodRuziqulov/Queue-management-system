@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.web.api;
 
 import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
 import com.example.queuemanagementsystem.dto.BusinessDto;
+import com.example.queuemanagementsystem.dto.BusinessStatusRequest;
 import com.example.queuemanagementsystem.dto.BusinessUpdateRequest;
 import com.example.queuemanagementsystem.service.BusinessService;
 import jakarta.validation.Valid;
@@ -48,5 +49,13 @@ public class BusinessController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /** Admin only: biznes statusini o'zgartirish (ACTIVE, SUSPENDED, va h.k.) */
+    @PutMapping("/{id}/status")
+    public ResponseEntity<BusinessDto> changeStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody BusinessStatusRequest request) {
+        return ResponseEntity.ok(service.changeStatus(id, request));
     }
 }

@@ -81,6 +81,29 @@ public class Business {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    /**
+     * Bepul sinov davri tugash sanasi (biznes ochilganda +14 kun).
+     * NULL bo'lsa sinov davri mavjud emas (to'g'ridan-to'g'ri ACTIVE).
+     */
+    @Column(name = "trial_end_date")
+    private Instant trialEndDate;
+
+    /**
+     * Pullik obuna tugash sanasi.
+     * NULL yoki o'tib ketgan bo'lsa – obuna faol emas.
+     */
+    @Column(name = "subscription_end_date")
+    private Instant subscriptionEndDate;
+
+    /** Obuna yoki sinov davri hozir faolmi? */
+    public boolean isAccessAllowed() {
+        Instant now = Instant.now();
+        if (status == BusinessStatus.ACTIVE) return true;
+        if (status == BusinessStatus.TRIAL && trialEndDate != null && now.isBefore(trialEndDate)) return true;
+        if (subscriptionEndDate != null && now.isBefore(subscriptionEndDate)) return true;
+        return false;
+    }
+
     @OneToMany(mappedBy = "business")
     private Set<BusinessHours> hours = new HashSet<>();
 

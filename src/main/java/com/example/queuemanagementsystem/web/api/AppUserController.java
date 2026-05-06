@@ -7,8 +7,10 @@ import com.example.queuemanagementsystem.service.AppUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,13 @@ public class AppUserController {
     @PutMapping("/{id}")
     public ResponseEntity<AppUserDto> update(@PathVariable UUID id, @Valid @RequestBody AppUserUpdateRequest request) {
         return ResponseEntity.ok(service.update(id, request));
+    }
+
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AppUserDto> uploadAvatar(
+            @PathVariable UUID id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(service.uploadAvatar(id, file));
     }
 
     @DeleteMapping("/{id}")

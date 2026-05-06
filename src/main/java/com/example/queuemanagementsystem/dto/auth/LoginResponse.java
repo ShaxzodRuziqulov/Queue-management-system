@@ -3,6 +3,7 @@ package com.example.queuemanagementsystem.dto.auth;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.List;
 import java.util.UUID;
 
 @Value
@@ -14,4 +15,6 @@ public class LoginResponse {
     UUID userId;
     String login;
     boolean businessOwner;
+    boolean admin;
+    List<String> roles;
 }

@@ -16,10 +16,14 @@ import org.mapstruct.ReportingPolicy;
 public interface BusinessMapper {
 
     @Mapping(target = "ownerId", source = "owner.id")
+    @Mapping(target = "accessAllowed", expression = "java(entity.isAccessAllowed())")
     BusinessDto toDto(Business entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "trialEndDate", ignore = true)
+    @Mapping(target = "subscriptionEndDate", ignore = true)
     @Mapping(target = "hours", ignore = true)
     @Mapping(target = "offeredServices", ignore = true)
     @Mapping(target = "staffMembers", ignore = true)
@@ -31,6 +35,9 @@ public interface BusinessMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "trialEndDate", ignore = true)
+    @Mapping(target = "subscriptionEndDate", ignore = true)
     @Mapping(target = "hours", ignore = true)
     @Mapping(target = "offeredServices", ignore = true)
     @Mapping(target = "staffMembers", ignore = true)

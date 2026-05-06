@@ -10,11 +10,15 @@ import com.example.queuemanagementsystem.mapper.AppUserMapper;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
 import com.example.queuemanagementsystem.security.AppUserDetailsService;
+import com.example.queuemanagementsystem.security.CurrentUserService;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +32,8 @@ public class AppUserService {
     private final BusinessRepository businessRepository;
     private final AppUserMapper mapper;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUserService currentUserService;
+    private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
     public List<AppUserDto> findAll() {
@@ -36,6 +42,7 @@ public class AppUserService {
 
     @Transactional(readOnly = true)
     public AppUserDto get(UUID id) {
+        requireSelfOrAdmin(id);
         return toDtoWithOwner(requireUser(id));
     }
 
@@ -54,6 +61,7 @@ public class AppUserService {
         entity.setPhone(StringUtils.hasText(request.getPhone()) ? request.getPhone().trim() : null);
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         entity.setActive(true);
+        entity.getRoles().add(RoleName.ROLE_USER);
         return toDtoWithOwner(repository.save(entity));
     }
 
@@ -68,15 +76,28 @@ public class AppUserService {
         AppUser entity = mapper.toEntity(request);
         entity.setLogin(login);
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        entity.getRoles().add(RoleName.ROLE_USER);
         return toDtoWithOwner(repository.save(entity));
     }
 
     public AppUserDto update(UUID id, AppUserUpdateRequest request) {
+        requireSelfOrAdmin(id);
         AppUser entity = requireUser(id);
         mapper.update(entity, request);
         if (StringUtils.hasText(request.getPassword())) {
             entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
+        return toDtoWithOwner(entity);
+    }
+
+    public AppUserDto uploadAvatar(UUID id, MultipartFile file) {
+        requireSelfOrAdmin(id);
+        AppUser entity = requireUser(id);
+        if (entity.getAvatarUrl() != null) {
+            fileStorageService.delete(entity.getAvatarUrl());
+        }
+        String url = fileStorageService.store(file, "avatars");
+        entity.setAvatarUrl(url);
         return toDtoWithOwner(entity);
     }
 
@@ -90,6 +111,14 @@ public class AppUserService {
     AppUser requireUser(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi topilmadi: " + id));
+    }
+
+    private void requireSelfOrAdmin(UUID targetId) {
+        if (currentUserService.isAdmin()) return;
+        UUID currentId = currentUserService.requireUserId();
+        if (!currentId.equals(targetId)) {
+            throw new AccessDeniedException("Faqat o'z profilingizga kira olasiz");
+        }
     }
 
     private AppUserDto toDtoWithOwner(AppUser entity) {

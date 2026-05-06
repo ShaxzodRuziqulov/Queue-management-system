@@ -1,0 +1,47 @@
+steps:
+  # Docker image ni build qilish
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app:$COMMIT_SHA'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app:latest'
+      - '.'
+
+  # Artifact Registry ga push qilish
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app'
+
+  # Cloud Run ga deploy qilish
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'qms-app'
+      - '--image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app:$COMMIT_SHA'
+      - '--region=${_REGION}'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--port=9092'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--min-instances=0'
+      - '--max-instances=3'
+      - '--set-env-vars=DB_URL=jdbc:postgresql://34.122.183.117:5432/qms,DB_USERNAME=postgres'
+      - '--set-secrets=DB_PASSWORD=qms-db-password:latest,JWT_SECRET=qms-jwt-secret:latest'
+
+substitutions:
+  _REGION: us-central1
+  _REPO_NAME: qms-repo
+
+images:
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app:$COMMIT_SHA'
+  - '${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO_NAME}/qms-app:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

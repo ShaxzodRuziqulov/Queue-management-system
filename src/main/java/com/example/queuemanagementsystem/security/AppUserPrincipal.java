@@ -6,8 +6,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
 
 @Getter
@@ -28,19 +31,26 @@ public class AppUserPrincipal implements UserDetails {
         this.businessOwner = businessOwner;
         this.admin = admin;
         this.active = user.isActive();
-        this.authorities = buildAuthorities(businessOwner, admin);
+        this.authorities = buildAuthorities(user, businessOwner, admin);
     }
 
-    private static List<GrantedAuthority> buildAuthorities(boolean businessOwner, boolean admin) {
-        List<GrantedAuthority> list = new java.util.ArrayList<>();
-        list.add(new SimpleGrantedAuthority("ROLE_USER"));
+    private static List<GrantedAuthority> buildAuthorities(AppUser user, boolean businessOwner, boolean admin) {
+        Set<GrantedAuthority> set = new HashSet<>();
+        
+        if (user.getRoles() != null) {
+            for (RoleName role : user.getRoles()) {
+                set.add(new SimpleGrantedAuthority(role.name()));
+            }
+        }
+        
+        set.add(new SimpleGrantedAuthority("ROLE_USER"));
         if (businessOwner) {
-            list.add(new SimpleGrantedAuthority("ROLE_BUSINESS_OWNER"));
+            set.add(new SimpleGrantedAuthority("ROLE_BUSINESS_OWNER"));
         }
         if (admin) {
-            list.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            set.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
         }
-        return List.copyOf(list);
+        return List.copyOf(set);
     }
 
     @Override

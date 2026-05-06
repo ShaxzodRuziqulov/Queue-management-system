@@ -36,17 +36,20 @@ public class OfferedServiceService {
 
     public OfferedServiceDto create(UUID businessId, OfferedServiceCreateRequest request) {
         OfferedService entity = mapper.toEntity(request);
-        entity.setBusiness(businessService.requireBusiness(businessId));
+        // Biznes trial/obuna faolligini tekshirish
+        entity.setBusiness(businessService.requireActiveAccess(businessId));
         return mapper.toDto(repository.save(entity));
     }
 
     public OfferedServiceDto update(UUID businessId, UUID serviceId, OfferedServiceUpdateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
         OfferedService entity = requireOfferedService(businessId, serviceId);
         mapper.update(entity, request);
         return mapper.toDto(entity);
     }
 
     public void delete(UUID businessId, UUID serviceId) {
+        businessService.requireOwnerOrAdmin(businessId);
         OfferedService entity = requireOfferedService(businessId, serviceId);
         repository.delete(entity);
     }

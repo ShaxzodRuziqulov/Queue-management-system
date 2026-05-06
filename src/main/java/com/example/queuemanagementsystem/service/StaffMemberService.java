@@ -37,7 +37,8 @@ public class StaffMemberService {
 
     public StaffMemberDto create(UUID businessId, StaffMemberCreateRequest request) {
         StaffMember entity = mapper.toEntity(request);
-        entity.setBusiness(businessService.requireBusiness(businessId));
+        // Biznes trial/obuna faolligini tekshirish
+        entity.setBusiness(businessService.requireActiveAccess(businessId));
         if (request.getLinkedUserId() != null) {
             entity.setLinkedUser(userService.requireUser(request.getLinkedUserId()));
         }
@@ -45,6 +46,7 @@ public class StaffMemberService {
     }
 
     public StaffMemberDto update(UUID businessId, UUID staffId, StaffMemberUpdateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         mapper.update(entity, request);
         if (request.getLinkedUserId() != null) {
@@ -54,6 +56,7 @@ public class StaffMemberService {
     }
 
     public void delete(UUID businessId, UUID staffId) {
+        businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         repository.delete(entity);
     }

@@ -1,6 +1,7 @@
 package com.example.queuemanagementsystem.web.error;
 
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
+import com.example.queuemanagementsystem.exception.BusinessAccessDeniedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -49,6 +50,12 @@ public class RestExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> serviceUnavailable(IllegalStateException ex) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.builder().message(ex.getMessage()).build());
+    }
+
+    @ExceptionHandler(BusinessAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> paymentRequired(BusinessAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
                 .body(ErrorResponse.builder().message(ex.getMessage()).build());
     }
 }

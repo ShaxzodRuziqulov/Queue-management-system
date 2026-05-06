@@ -7,7 +7,9 @@ import com.example.queuemanagementsystem.dto.ReviewUpdateRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.ReviewMapper;
 import com.example.queuemanagementsystem.repository.ReviewRepository;
+import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ public class ReviewService {
     private final ReviewRepository repository;
     private final ReviewMapper mapper;
     private final BookingService bookingService;
+    private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
     public List<ReviewDto> findAll() {
@@ -44,19 +47,28 @@ public class ReviewService {
 
     public ReviewDto update(UUID id, ReviewUpdateRequest request) {
         Review entity = requireReview(id);
+        requireReviewerOrAdmin(entity);
         mapper.update(entity, request);
         return mapper.toDto(entity);
     }
 
     public void delete(UUID id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Sharh topilmadi: " + id);
-        }
+        Review entity = requireReview(id);
+        requireReviewerOrAdmin(entity);
         repository.deleteById(id);
     }
 
     Review requireReview(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sharh topilmadi: " + id));
+    }
+
+    private void requireReviewerOrAdmin(Review review) {
+        if (currentUserService.isAdmin()) return;
+        UUID currentId = currentUserService.requireUserId();
+        UUID reviewerId = review.getBooking().getCustomer().getId();
+        if (!reviewerId.equals(currentId)) {
+            throw new AccessDeniedException("Bu sharhga ruxsat yo'q");
+        }
     }
 }

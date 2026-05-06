@@ -9,10 +9,17 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -62,6 +69,12 @@ public class AppUser {
 
     @OneToMany(mappedBy = "user")
     private Set<UserIdentity> identities = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role_name", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Set<RoleName> roles = new HashSet<>();
 
     @OneToMany(mappedBy = "owner")
     private Set<Business> ownedBusinesses = new HashSet<>();

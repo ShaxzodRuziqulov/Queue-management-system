@@ -12,6 +12,7 @@ import com.example.queuemanagementsystem.mapper.BookingMapper;
 import com.example.queuemanagementsystem.repository.BookingRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +62,8 @@ public class BookingService {
                 request.getBusinessId(), request.getOfferedServiceId());
         Booking entity = mapper.toEntity(request);
         entity.setCustomer(userService.requireUser(customerId));
-        entity.setBusiness(businessService.requireBusiness(request.getBusinessId()));
+        // Biznes trial/obuna faolligini tekshirish
+        entity.setBusiness(businessService.requireActiveAccess(request.getBusinessId()));
         entity.setOfferedService(offeredService);
         if (entity.getStatus() == null) {
             entity.setStatus(BookingStatus.PENDING);
@@ -75,25 +77,33 @@ public class BookingService {
 
     public BookingDto update(UUID id, BookingUpdateRequest request) {
         Booking entity = requireBooking(id);
+        requireCustomerOrAdmin(entity);
         mapper.update(entity, request);
         if (request.getStaffId() != null) {
             entity.setStaff(staffMemberService.requireStaff(entity.getBusiness().getId(), request.getStaffId()));
         }
         if (!entity.getEndAt().isAfter(entity.getStartAt())) {
-            throw new IllegalArgumentException("Tugash vaqti boshlanishdan keyin bo‘lishi kerak");
+            throw new IllegalArgumentException("Tugash vaqti boshlanishdan keyin bo’lishi kerak");
         }
         return mapper.toDto(entity);
     }
 
     public void delete(UUID id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Bron topilmadi: " + id);
-        }
+        Booking entity = requireBooking(id);
+        requireCustomerOrAdmin(entity);
         repository.deleteById(id);
     }
 
     Booking requireBooking(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Bron topilmadi: " + id));
+    }
+
+    private void requireCustomerOrAdmin(Booking booking) {
+        if (currentUserService.isAdmin()) return;
+        UUID currentId = currentUserService.requireUserId();
+        if (!booking.getCustomer().getId().equals(currentId)) {
+            throw new AccessDeniedException("Bu bronga ruxsat yo'q");
+        }
     }
 }

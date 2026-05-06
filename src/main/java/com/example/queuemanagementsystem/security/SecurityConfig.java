@@ -41,6 +41,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // Admin only
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/status").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -54,17 +59,30 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource(SecurityProperties properties) {
         CorsConfiguration configuration = new CorsConfiguration();
-        List<String> origins = properties.getCors().getAllowedOrigins();
-        if (origins != null && origins.contains("*")) {
+
+        List<String> origins = properties.getCors().getAllowedOrigins().stream()
+                .flatMap(o -> java.util.Arrays.stream(o.split(",")))
+                .map(String::trim)
+                .filter(o -> !o.isBlank())
+                .toList();
+
+        boolean isWildcard = origins.contains("*");
+        if (isWildcard) {
             configuration.setAllowedOriginPatterns(List.of("*"));
-        } else if (origins != null && !origins.isEmpty()) {
-            configuration.setAllowedOrigins(origins);
         } else {
-            configuration.setAllowedOriginPatterns(List.of("*"));
+            configuration.setAllowedOrigins(origins);
+            configuration.setAllowCredentials(true);
         }
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", "Accept",
+                "X-Requested-With", "Origin", "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"
+        ));
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

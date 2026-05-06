@@ -21,6 +21,9 @@ public class BusinessDto {
     private BigDecimal longitude;
     private String contactPhone;
     private BusinessStatus status;
+    private Instant trialEndDate;
+    private Instant subscriptionEndDate;
+    private boolean accessAllowed;
     private Instant createdAt;
     private Instant updatedAt;
 }

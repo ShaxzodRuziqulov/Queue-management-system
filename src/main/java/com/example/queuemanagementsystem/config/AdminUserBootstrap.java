@@ -4,6 +4,7 @@ import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
 import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -29,7 +30,7 @@ public class AdminUserBootstrap implements ApplicationRunner {
     private boolean enabled;
 
     @Override
-    public void run(ApplicationArguments args) {
+    public void run(@NonNull ApplicationArguments args) {
         if (!enabled) {
             return;
         }

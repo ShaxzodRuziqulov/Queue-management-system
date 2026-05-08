@@ -168,9 +168,92 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Updated User\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+998909876543\",\n  \"avatarUrl\": null,\n  \"active\": true\n}"
+              "raw": "{\n  \"displayName\": \"Updated User\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+998909876543\",\n  \"avatarUrl\": null,\n  \"active\": true,\n  \"roles\": [\"ROLE_BUSINESS_OWNER\"]\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}",
+            "description": "Faqat admin o'zgartirishlar uchun.\nroles massivida ruxsat etilgan qiymatlar: ROLE_USER, ROLE_BUSINESS_OWNER, ROLE_ADMIN\nactive: false → foydalanuvchi bloklandi (login qila olmaydi)"
+          }
+        },
+        {
+          "name": "Activate user (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  console.log('Foydalanuvchi faollashtirildi. active:', pm.response.json().active);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}",
+            "description": "Bloklangan foydalanuvchini qayta faollashtirish."
+          }
+        },
+        {
+          "name": "Deactivate user (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  console.log('Foydalanuvchi bloklandi. active:', pm.response.json().active);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}",
+            "description": "Foydalanuvchini bloklash. Login qila olmaydi, token bekor bo'ladi."
+          }
+        },
+        {
+          "name": "Change user roles (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  console.log('Rollar o\\'zgartirildi:', pm.response.json().roles);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"ROLE_USER\", \"ROLE_BUSINESS_OWNER\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}",
+            "description": "Foydalanuvchi rollarini yangilash.\nRuxsat etilgan rollar: ROLE_USER, ROLE_BUSINESS_OWNER, ROLE_ADMIN\nBu so'rov audit logga USER_ROLE_CHANGED sifatida yoziladi."
           }
         },
         {
@@ -344,6 +427,62 @@
             },
             "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/status",
             "description": "Mumkin statuslar: TRIAL, ACTIVE, EXPIRED, SUSPENDED, DRAFT, PENDING_REVIEW\nSUSPENDED uchun: {\"status\": \"SUSPENDED\"}\nACTIVE uchun subscriptionEndDate ixtiyoriy (null = cheksiz)"
+          }
+        },
+        {
+          "name": "Review business – APPROVE (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  console.log('Biznes tasdiqlandi. Yangi status:', j.status, '| reviewedBy:', j.reviewedBy);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"note\": \"Tekshiruv o'tdi, hujjatlar to'liq\",\n  \"subscriptionEndDate\": \"2027-01-01T00:00:00Z\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/review",
+            "description": "Faqat PENDING_REVIEW statusidagi biznesni tasdiqlash.\nTasdiqlangandan so'ng status → ACTIVE, reviewedBy/reviewedAt saqlanadi.\nsubscriptionEndDate ixtiyoriy (null = cheksiz)."
+          }
+        },
+        {
+          "name": "Review business – REJECT (Admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const j = pm.response.json();",
+                  "  console.log('Biznes rad etildi. Yangi status:', j.status, '| reviewNote:', j.reviewNote);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REJECT\",\n  \"note\": \"Hujjatlar to'liq emas, qayta yuborisiz\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/review",
+            "description": "Faqat PENDING_REVIEW statusidagi biznesni rad etish.\nRad etilgandan so'ng status → DRAFT, note majburiy.\nnote ko'rsatilmasa → 400 Bad Request."
           }
         }
       ]
@@ -649,6 +788,84 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/api/v1/bookings/{{bookingId}}"
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "🛡️ Admin",
+      "description": "Faqat ROLE_ADMIN uchun. Audit log va boshqa admin endpointlari.",
+      "item": [
+        {
+          "name": "Get audit logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-logs?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-logs"],
+              "query": [
+                { "key": "page",       "value": "0",    "description": "Sahifa raqami (0 dan boshlanadi)" },
+                { "key": "size",       "value": "20",   "description": "Sahifadagi yozuvlar soni (default 50)" },
+                { "key": "entityType", "value": "",     "description": "Filter: BUSINESS | USER (bo'sh = hammasi)", "disabled": true },
+                { "key": "action",     "value": "",     "description": "Filter: BUSINESS_STATUS_CHANGED | BUSINESS_REVIEWED | BUSINESS_DELETED | USER_CREATED | USER_UPDATED | USER_ACTIVATED | USER_DEACTIVATED | USER_ROLE_CHANGED | USER_DELETED", "disabled": true },
+                { "key": "adminLogin", "value": "",     "description": "Filter: admin login bo'yicha qidirish", "disabled": true }
+              ]
+            },
+            "description": "Audit log yozuvlarini sahifalab olish.\n\nFilter parametrlari (hammasi ixtiyoriy):\n• entityType – BUSINESS yoki USER\n• action – aniq harakat turi\n• adminLogin – qaysi admin bajargani\n\nJavob formati: Spring Page (content, totalElements, totalPages, ...)"
+          }
+        },
+        {
+          "name": "Get audit logs – businesses only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-logs?entityType=BUSINESS&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-logs"],
+              "query": [
+                { "key": "entityType", "value": "BUSINESS" },
+                { "key": "page",       "value": "0" },
+                { "key": "size",       "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get audit logs – users only",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-logs?entityType=USER&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-logs"],
+              "query": [
+                { "key": "entityType", "value": "USER" },
+                { "key": "page",       "value": "0" },
+                { "key": "size",       "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get audit logs – by action (BUSINESS_REVIEWED)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/audit-logs?action=BUSINESS_REVIEWED&page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "audit-logs"],
+              "query": [
+                { "key": "action", "value": "BUSINESS_REVIEWED" },
+                { "key": "page",   "value": "0" },
+                { "key": "size",   "value": "20" }
+              ]
+            }
           }
         }
       ]

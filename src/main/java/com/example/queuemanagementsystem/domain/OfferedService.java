@@ -27,15 +27,7 @@ import java.util.UUID;
 @Table(name = "offered_services")
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(onlyExplicitlyIncluded = true)
-public class OfferedService {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private UUID id;
+public class OfferedService extends BaseEntity{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id", nullable = false)
@@ -56,24 +48,6 @@ public class OfferedService {
     @Column(nullable = false)
     private boolean active = true;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
-
     @OneToMany(mappedBy = "offeredService")
     private Set<Booking> bookings = new HashSet<>();
-
-    @PrePersist
-    void onCreate() {
-        Instant now = Instant.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = Instant.now();
-    }
 }

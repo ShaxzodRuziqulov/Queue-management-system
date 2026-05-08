@@ -31,15 +31,7 @@ import java.util.UUID;
 )
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(onlyExplicitlyIncluded = true)
-public class BusinessHours {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private UUID id;
+public class BusinessHours extends BaseEntity{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id", nullable = false)

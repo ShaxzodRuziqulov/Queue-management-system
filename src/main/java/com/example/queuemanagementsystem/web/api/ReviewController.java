@@ -21,8 +21,8 @@ public class ReviewController {
     private final ReviewService service;
 
     @GetMapping
-    public ResponseEntity<List<ReviewDto>> list() {
-        return ResponseEntity.ok(service.findAll());
+    public ResponseEntity<List<ReviewDto>> list(@RequestParam(required = false) UUID businessId) {
+        return ResponseEntity.ok(service.findAll(businessId));
     }
 
     @GetMapping("/{id}")

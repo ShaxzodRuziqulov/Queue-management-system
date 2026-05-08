@@ -6,7 +6,6 @@ import com.example.queuemanagementsystem.dto.auth.RegisterRequest;
 import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import com.example.queuemanagementsystem.security.AppUserPrincipal;
 import com.example.queuemanagementsystem.security.JwtService;
-import com.example.queuemanagementsystem.security.SecurityProperties;
 import com.example.queuemanagementsystem.service.AppUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,52 +30,40 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final SecurityProperties securityProperties;
     private final AppUserService appUserService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        String login = AppUserDetailsService.normalizeLogin(request.getLogin());
+        String username = AppUserDetailsService.normalizeLogin(request.getLogin());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(login, request.getPassword()));
+                new UsernamePasswordAuthenticationToken(username, request.getPassword()));
         return ResponseEntity.ok(buildLoginResponse(authentication));
     }
 
     @PostMapping("/register")
     public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
         appUserService.register(request);
-        String login = AppUserDetailsService.normalizeLogin(request.getLogin());
+        String username = AppUserDetailsService.normalizeLogin(request.getLogin());
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(login, request.getPassword()));
+                new UsernamePasswordAuthenticationToken(username, request.getPassword()));
         return ResponseEntity.status(HttpStatus.CREATED).body(buildLoginResponse(authentication));
     }
 
     private LoginResponse buildLoginResponse(Authentication authentication) {
-        String token = jwtService.createToken(authentication);
-        long expiresInSeconds = TimeUnit.MILLISECONDS.toSeconds(securityProperties.getJwt().getExpirationMs());
-        List<String> roles = authentication.getAuthorities().stream()
-                .map(a -> a.getAuthority())
+        AppUserPrincipal principal = (AppUserPrincipal) authentication.getPrincipal();
+        String token = jwtService.generateToken(principal);
+        long expiresInSeconds = TimeUnit.MILLISECONDS.toSeconds(jwtService.getExpirationTime());
+        List<String> roles = principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
                 .toList();
-        if (authentication.getPrincipal() instanceof AppUserPrincipal principal) {
-            return LoginResponse.builder()
-                    .accessToken(token)
-                    .tokenType("Bearer")
-                    .expiresInSeconds(expiresInSeconds)
-                    .userId(principal.getId())
-                    .login(principal.getLogin())
-                    .businessOwner(principal.isBusinessOwner())
-                    .admin(principal.isAdmin())
-                    .roles(roles)
-                    .build();
-        }
         return LoginResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresInSeconds(expiresInSeconds)
-                .userId(null)
-                .login(authentication.getName())
-                .businessOwner(false)
-                .admin(false)
+                .userId(principal.getId())
+                .login(principal.getUsername())
+                .businessOwner(principal.isBusinessOwner())
+                .admin(principal.isAdmin())
                 .roles(roles)
                 .build();
     }

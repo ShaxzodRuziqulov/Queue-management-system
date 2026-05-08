@@ -26,15 +26,8 @@ import java.util.UUID;
 )
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class Review {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private UUID id;
+public class Review extends BaseEntity{
 
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", nullable = false, unique = true)
@@ -45,12 +38,4 @@ public class Review {
 
     @Column(columnDefinition = "text")
     private String comment;
-
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @PrePersist
-    void onCreate() {
-        createdAt = Instant.now();
-    }
 }

@@ -1,90 +1,51 @@
 package com.example.queuemanagementsystem.security;
 
 import com.example.queuemanagementsystem.domain.AppUser;
+import com.example.queuemanagementsystem.domain.Role;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.example.queuemanagementsystem.domain.enums.RoleName;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
-@Getter
 public class AppUserPrincipal implements UserDetails {
 
+    @Getter
     private final UUID id;
-    private final String login;
+    private final String username;
     private final String passwordHash;
-    private final boolean businessOwner;
-    private final boolean admin;
     private final boolean active;
     private final List<GrantedAuthority> authorities;
 
-    public AppUserPrincipal(AppUser user, boolean businessOwner, boolean admin) {
+    public AppUserPrincipal(AppUser user) {
         this.id = user.getId();
-        this.login = user.getLogin();
+        this.username = user.getUsername();
         this.passwordHash = user.getPasswordHash();
-        this.businessOwner = businessOwner;
-        this.admin = admin;
         this.active = user.isActive();
-        this.authorities = buildAuthorities(user, businessOwner, admin);
+        this.authorities = user.getRoles().stream()
+                .map(Role::getName)
+                .map(SimpleGrantedAuthority::new)
+                .map(a -> (GrantedAuthority) a)
+                .toList();
     }
 
-    private static List<GrantedAuthority> buildAuthorities(AppUser user, boolean businessOwner, boolean admin) {
-        Set<GrantedAuthority> set = new HashSet<>();
-        
-        if (user.getRoles() != null) {
-            for (RoleName role : user.getRoles()) {
-                set.add(new SimpleGrantedAuthority(role.name()));
-            }
-        }
-        
-        set.add(new SimpleGrantedAuthority("ROLE_USER"));
-        if (businessOwner) {
-            set.add(new SimpleGrantedAuthority("ROLE_BUSINESS_OWNER"));
-        }
-        if (admin) {
-            set.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        }
-        return List.copyOf(set);
+    public boolean isAdmin() {
+        return authorities.stream().anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_ADMIN"));
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+    public boolean isBusinessOwner() {
+        return authorities.stream().anyMatch(a -> Objects.equals(a.getAuthority(), "ROLE_BUSINESS_OWNER"));
     }
 
-    @Override
-    public String getPassword() {
-        return passwordHash != null ? passwordHash : "";
-    }
-
-    @Override
-    public String getUsername() {
-        return login;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return active;
-    }
+    @Override public String getUsername() { return username; }
+    @Override public String getPassword() { return passwordHash; }
+    @Override public boolean isEnabled() { return active; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public Collection<? extends GrantedAuthority> getAuthorities() { return authorities; }
 }

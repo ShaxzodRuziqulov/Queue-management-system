@@ -12,11 +12,14 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface BusinessMapper {
+@Mapper(componentModel = "spring")
+public interface BusinessMapper extends EntityMapper<BusinessDto, Business> {
 
     @Mapping(target = "ownerId", source = "owner.id")
     @Mapping(target = "accessAllowed", expression = "java(entity.isAccessAllowed())")
+    @Mapping(target = "reviewNote", source = "reviewNote")
+    @Mapping(target = "reviewedBy", source = "reviewedBy")
+    @Mapping(target = "reviewedAt", source = "reviewedAt")
     BusinessDto toDto(Business entity);
 
     @Mapping(target = "id", ignore = true)

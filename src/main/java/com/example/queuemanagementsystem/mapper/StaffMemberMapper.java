@@ -4,16 +4,10 @@ import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.dto.StaffMemberCreateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberDto;
 import com.example.queuemanagementsystem.dto.StaffMemberUpdateRequest;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface StaffMemberMapper {
+@Mapper(componentModel = "spring")
+public interface StaffMemberMapper extends EntityMapper<StaffMemberDto, StaffMember> {
 
     @Mapping(target = "businessId", source = "business.id")
     @Mapping(target = "linkedUserId", source = "linkedUser.id")

@@ -4,16 +4,10 @@ import com.example.queuemanagementsystem.domain.OfferedService;
 import com.example.queuemanagementsystem.dto.OfferedServiceCreateRequest;
 import com.example.queuemanagementsystem.dto.OfferedServiceDto;
 import com.example.queuemanagementsystem.dto.OfferedServiceUpdateRequest;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
+import org.mapstruct.*;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface OfferedServiceMapper {
+@Mapper(componentModel = "spring")
+public interface OfferedServiceMapper extends EntityMapper<OfferedServiceDto, OfferedService> {
 
     @Mapping(target = "businessId", source = "business.id")
     OfferedServiceDto toDto(OfferedService entity);

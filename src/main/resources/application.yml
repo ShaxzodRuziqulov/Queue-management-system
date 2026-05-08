@@ -1,19 +1,16 @@
 server:
   port: 9092
-
 app:
   upload:
     dir: ${UPLOAD_DIR:uploads}
   security:
-    jwt:
-      secret: ${JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
-      expiration-ms: ${JWT_EXPIRATION_MS:86400000}
     cors:
       allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:5174}
-    admin-bootstrap: true
-    admin-login: ${API_ADMIN_USER:admin}
-    admin-password: ${API_ADMIN_PASSWORD:admin}
-
+security:
+  jwt:
+    secret-key: ${SECRET_KEY:f72456084250dd5fa5b18eafffe4cdc1dbdcb36fa0e3608eb85d13b67705ce44}
+    expiration-time: 86400000
+    refresh-expiration-time: 604800000
 spring:
   servlet:
     multipart:

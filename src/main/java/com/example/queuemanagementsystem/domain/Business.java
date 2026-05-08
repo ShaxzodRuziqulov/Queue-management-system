@@ -30,15 +30,8 @@ import java.util.UUID;
 @Table(name = "businesses")
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
-public class Business {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private UUID id;
+public class Business extends BaseEntity{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
@@ -75,12 +68,6 @@ public class Business {
     @Column(nullable = false, length = 32)
     private BusinessStatus status = BusinessStatus.DRAFT;
 
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
-
     /**
      * Bepul sinov davri tugash sanasi (biznes ochilganda +14 kun).
      * NULL bo'lsa sinov davri mavjud emas (to'g'ridan-to'g'ri ACTIVE).
@@ -94,6 +81,20 @@ public class Business {
      */
     @Column(name = "subscription_end_date")
     private Instant subscriptionEndDate;
+
+    // ── Review workflow ──────────────────────────────────────────────────────
+
+    /** PENDING_REVIEW → ACTIVE/DRAFT o'tish vaqtida admin yozgan izoh */
+    @Column(name = "review_note", columnDefinition = "text")
+    private String reviewNote;
+
+    /** Kim ko'rib chiqdi (admin logini) */
+    @Column(name = "reviewed_by", length = 64)
+    private String reviewedBy;
+
+    /** Qachon ko'rib chiqildi */
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
 
     /** Obuna yoki sinov davri hozir faolmi? */
     public boolean isAccessAllowed() {
@@ -115,16 +116,4 @@ public class Business {
 
     @OneToMany(mappedBy = "business")
     private Set<Booking> bookings = new HashSet<>();
-
-    @PrePersist
-    void onCreate() {
-        Instant now = Instant.now();
-        createdAt = now;
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = Instant.now();
-    }
 }

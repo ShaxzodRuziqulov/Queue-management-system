@@ -12,8 +12,8 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface BusinessHoursMapper {
+@Mapper(componentModel = "spring")
+public interface BusinessHoursMapper extends EntityMapper<BusinessHoursDto, BusinessHours> {
 
     @Mapping(target = "businessId", source = "business.id")
     BusinessHoursDto toDto(BusinessHours entity);

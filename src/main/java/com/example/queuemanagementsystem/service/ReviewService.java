@@ -27,7 +27,10 @@ public class ReviewService {
     private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
-    public List<ReviewDto> findAll() {
+    public List<ReviewDto> findAll(UUID businessId) {
+        if (businessId != null) {
+            return repository.findByBooking_Business_Id(businessId).stream().map(mapper::toDto).toList();
+        }
         return repository.findAll().stream().map(mapper::toDto).toList();
     }
 

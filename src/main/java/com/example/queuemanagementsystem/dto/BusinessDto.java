@@ -26,4 +26,7 @@ public class BusinessDto {
     private boolean accessAllowed;
     private Instant createdAt;
     private Instant updatedAt;
+    private String reviewNote;
+    private String reviewedBy;
+    private Instant reviewedAt;
 }

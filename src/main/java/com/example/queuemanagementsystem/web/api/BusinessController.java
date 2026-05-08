@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.web.api;
 
 import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
 import com.example.queuemanagementsystem.dto.BusinessDto;
+import com.example.queuemanagementsystem.dto.BusinessReviewRequest;
 import com.example.queuemanagementsystem.dto.BusinessStatusRequest;
 import com.example.queuemanagementsystem.dto.BusinessUpdateRequest;
 import com.example.queuemanagementsystem.service.BusinessService;
@@ -57,5 +58,13 @@ public class BusinessController {
             @PathVariable UUID id,
             @Valid @RequestBody BusinessStatusRequest request) {
         return ResponseEntity.ok(service.changeStatus(id, request));
+    }
+
+    /** Admin only: PENDING_REVIEW biznesni tasdiqlash yoki rad etish */
+    @PostMapping("/{id}/review")
+    public ResponseEntity<BusinessDto> review(
+            @PathVariable UUID id,
+            @Valid @RequestBody BusinessReviewRequest request) {
+        return ResponseEntity.ok(service.review(id, request));
     }
 }

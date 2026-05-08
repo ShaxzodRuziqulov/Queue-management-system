@@ -2,48 +2,33 @@ package com.example.queuemanagementsystem.security;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
-import com.example.queuemanagementsystem.repository.BusinessRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.jspecify.annotations.NonNull;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Locale;
-
 @Service
 @RequiredArgsConstructor
 public class AppUserDetailsService implements UserDetailsService {
 
-    private final AppUserRepository appUserRepository;
-    private final BusinessRepository businessRepository;
+    private final AppUserRepository repository;
 
-    @Value("${app.security.admin-login:admin}")
-    private String adminLogin;
+    public static String normalizeLogin(String login) {
+        return login == null ? "" : login.trim().toLowerCase();
+    }
 
     @Override
     @Transactional(readOnly = true)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        String key = normalizeLogin(username);
-        AppUser user = appUserRepository.findByLogin(key)
-                .orElseThrow(() -> new UsernameNotFoundException(username));
+    public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
+        AppUser user = repository.findWithRolesByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Foydalanuvchi topilmadi: " + username));
         if (!user.isActive()) {
-            throw new UsernameNotFoundException(username);
+            throw new DisabledException("Foydalanuvchi bloklangan");
         }
-        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-            throw new UsernameNotFoundException("Parol o‘rnatilmagan");
-        }
-        boolean owner = businessRepository.existsByOwner_Id(user.getId());
-        boolean admin = adminLogin.equalsIgnoreCase(user.getLogin());
-        return new AppUserPrincipal(user, owner, admin);
-    }
-
-    public static String normalizeLogin(String login) {
-        if (login == null) {
-            return "";
-        }
-        return login.trim().toLowerCase(Locale.ROOT);
+        return new AppUserPrincipal(user);
     }
 }

@@ -12,8 +12,8 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface BookingMapper {
+@Mapper(componentModel = "spring")
+public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
 
     @Mapping(target = "customerId", source = "customer.id")
     @Mapping(target = "businessId", source = "business.id")

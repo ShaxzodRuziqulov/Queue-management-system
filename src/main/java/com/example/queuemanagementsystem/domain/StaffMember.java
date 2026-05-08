@@ -26,15 +26,7 @@ import java.util.UUID;
 @Table(name = "staff_members")
 @Getter
 @Setter
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(onlyExplicitlyIncluded = true)
-public class StaffMember {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
-    @ToString.Include
-    private UUID id;
+public class StaffMember extends BaseEntity{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id", nullable = false)

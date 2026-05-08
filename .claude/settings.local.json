@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vue-tsc *)",
+      "Bash(xargs grep -l \"email\\\\|mail\\\\|notification\")",
+      "Bash(./mvnw compile *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\12\\\\QueueManagementSystem\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(xargs grep -l \"@Valid\\\\|@NotNull\\\\|@NotBlank\\\\|@Min\\\\|@Max\\\\|@Pattern\")",
+      "Bash(grep -v \"^\\\\[ERROR\\\\] $\")",
+      "Bash(./mvnw clean *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(ls \"D:\\\\projects\" 2>/dev/null || echo \"not found\")",
+      "Bash(Get-ChildItem -Path \"D:\\\\12\\\\QueueManagementSystem\\\\src\\\\main\\\\java\\\\com\\\\example\\\\queuemanagementsystem\" -Recurse -Filter \"*.java\")",
+      "Bash(Select-Object FullName)",
+      "Bash(ConvertTo-Json)",
+      "Bash(Get-ChildItem -Path \"D:\\\\projects\\\\ontime-busines-managment-frontend\\\\src\\\\views\\\\admin\\\\\" -Recurse -File | Select-Object FullName)"
+    ]
+  }
+}

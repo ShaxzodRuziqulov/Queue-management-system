@@ -1,7 +1,7 @@
 package com.example.queuemanagementsystem.security;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -20,15 +20,18 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableConfigurationProperties(SecurityProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
     private final RestAuthHandlers restAuthHandlers;
+
+    @Value("${app.security.cors.allowed-origins:*}")
+    private String allowedOrigins;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
@@ -40,12 +43,38 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        // Admin only
-                        .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
+
+                        // ── ADMIN only ───────────────────────────────────────────
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,    "/api/v1/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/review").hasRole("ADMIN")
+
+                        // ── Business CRUD (owner creates/edits/deletes own business) ──
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+
+                        // ── Staff management ─────────────────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+
+                        // ── Offered services management ──────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/services").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/services/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/services/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+
+                        // ── Business hours management ────────────────────────────
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/hours").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+
+                        // ── Everything else: any authenticated user ──────────────
                         .anyRequest().authenticated())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -57,11 +86,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(SecurityProperties properties) {
+    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        List<String> origins = properties.getCors().getAllowedOrigins().stream()
-                .flatMap(o -> java.util.Arrays.stream(o.split(",")))
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(o -> !o.isBlank())
                 .toList();

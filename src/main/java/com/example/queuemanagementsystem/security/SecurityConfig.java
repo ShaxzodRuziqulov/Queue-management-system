@@ -55,9 +55,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/review").hasRole("ADMIN")
 
                         // ── Business CRUD (owner creates/edits/deletes own business) ──
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+                        // ROLE_USER ham biznes yarata olishi kerak (birinchi marta, onboarding)
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses").hasAnyRole("USER", "BUSINESS_OWNER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+
+                        // ── Staff portal (o'z profili) ───────────────────────────
+                        .requestMatchers("/api/v1/staff/me/**").hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Staff management ─────────────────────────────────────
                         .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")

@@ -12,4 +12,8 @@ public interface StaffMemberRepository extends JpaRepository<StaffMember, UUID> 
     List<StaffMember> findByBusiness_Id(UUID businessId);
 
     Optional<StaffMember> findByBusiness_IdAndId(UUID businessId, UUID id);
+
+    Optional<StaffMember> findByLinkedUser_Id(UUID userId);
+
+    boolean existsByLinkedUser_Id(UUID userId);
 }

@@ -14,18 +14,21 @@ import java.util.UUID;
 
 public class AppUserPrincipal implements UserDetails {
 
-    @Getter
-    private final UUID id;
+    @Getter private final UUID id;
+    @Getter private final String displayName;
+    @Getter private final String avatarUrl;
     private final String username;
     private final String passwordHash;
     private final boolean active;
     private final List<GrantedAuthority> authorities;
 
     public AppUserPrincipal(AppUser user) {
-        this.id = user.getId();
-        this.username = user.getUsername();
+        this.id          = user.getId();
+        this.username    = user.getUsername();
+        this.displayName = user.getDisplayName();
+        this.avatarUrl   = user.getAvatarUrl();
         this.passwordHash = user.getPasswordHash();
-        this.active = user.isActive();
+        this.active      = user.isActive();
         this.authorities = user.getRoles().stream()
                 .map(Role::getName)
                 .map(SimpleGrantedAuthority::new)

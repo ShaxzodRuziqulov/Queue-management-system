@@ -10,6 +10,7 @@ import com.example.queuemanagementsystem.repository.OfferedServiceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class OfferedServiceService {
     private final OfferedServiceRepository repository;
     private final OfferedServiceMapper mapper;
     private final BusinessService businessService;
+    private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
     public List<OfferedServiceDto> findAll(UUID businessId) {
@@ -51,7 +53,31 @@ public class OfferedServiceService {
     public void delete(UUID businessId, UUID serviceId) {
         businessService.requireOwnerOrAdmin(businessId);
         OfferedService entity = requireOfferedService(businessId, serviceId);
+        if (entity.getImageUrl() != null) {
+            fileStorageService.delete(entity.getImageUrl());
+        }
         repository.delete(entity);
+    }
+
+    public OfferedServiceDto uploadImage(UUID businessId, UUID serviceId, MultipartFile file) {
+        businessService.requireOwnerOrAdmin(businessId);
+        OfferedService entity = requireOfferedService(businessId, serviceId);
+        if (entity.getImageUrl() != null) {
+            fileStorageService.delete(entity.getImageUrl());
+        }
+        String url = fileStorageService.store(file, "services");
+        entity.setImageUrl(url);
+        return mapper.toDto(entity);
+    }
+
+    public OfferedServiceDto deleteImage(UUID businessId, UUID serviceId) {
+        businessService.requireOwnerOrAdmin(businessId);
+        OfferedService entity = requireOfferedService(businessId, serviceId);
+        if (entity.getImageUrl() != null) {
+            fileStorageService.delete(entity.getImageUrl());
+            entity.setImageUrl(null);
+        }
+        return mapper.toDto(entity);
     }
 
     OfferedService requireOfferedService(UUID businessId, UUID serviceId) {

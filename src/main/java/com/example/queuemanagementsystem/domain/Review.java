@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -38,4 +39,12 @@ public class Review extends BaseEntity{
 
     @Column(columnDefinition = "text")
     private String comment;
+
+    /**
+     * Sharh tegishli xodim — bookingdan avtomatik o'rnatiladi.
+     * NULL bo'lsa xodim aniqlanmagan (eski bronlar uchun).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "staff_id")
+    private StaffMember staff;
 }

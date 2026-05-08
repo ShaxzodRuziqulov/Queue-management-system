@@ -17,6 +17,7 @@ public class OfferedServiceDto {
     private int durationMinutes;
     private BigDecimal basePrice;
     private boolean active;
+    private String imageUrl;
     private Instant createdAt;
     private Instant updatedAt;
 }

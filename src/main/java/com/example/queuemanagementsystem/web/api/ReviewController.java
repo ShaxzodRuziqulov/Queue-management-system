@@ -21,8 +21,15 @@ public class ReviewController {
     private final ReviewService service;
 
     @GetMapping
-    public ResponseEntity<List<ReviewDto>> list(@RequestParam(required = false) UUID businessId) {
-        return ResponseEntity.ok(service.findAll(businessId));
+    public ResponseEntity<List<ReviewDto>> list(
+            @RequestParam(required = false) UUID businessId,
+            @RequestParam(required = false) UUID staffId) {
+        return ResponseEntity.ok(service.findAll(businessId, staffId));
+    }
+
+    @GetMapping("/staff/{staffId}/avg")
+    public ResponseEntity<Double> staffAvgRating(@PathVariable UUID staffId) {
+        return ResponseEntity.ok(service.avgRating(staffId));
     }
 
     @GetMapping("/{id}")

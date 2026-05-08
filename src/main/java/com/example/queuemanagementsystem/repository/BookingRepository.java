@@ -11,4 +11,10 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findByCustomer_Id(UUID customerId);
 
     List<Booking> findByBusiness_Id(UUID businessId);
+
+    List<Booking> findByStaff_Id(UUID staffId);
+
+    long countByStaff_Id(UUID staffId);
+
+    long countByStaff_IdAndStatus(UUID staffId, com.example.queuemanagementsystem.domain.enums.BookingStatus status);
 }

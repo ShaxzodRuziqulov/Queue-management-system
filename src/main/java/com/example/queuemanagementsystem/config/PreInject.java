@@ -29,6 +29,7 @@ public class PreInject {
                     Role.builder().name("ROLE_ADMIN").description("Admin").build(),
                     Role.builder().name("ROLE_MANAGER").description("Manager").build(),
                     Role.builder().name("ROLE_BUSINESS_OWNER").description("Business Owner").build(),
+                    Role.builder().name("ROLE_STAFF").description("Staff Member").build(),
                     Role.builder().name("ROLE_USER").description("User").build()
             ));
         }

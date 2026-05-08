@@ -14,4 +14,11 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
     Optional<Review> findByBooking_Id(UUID bookingId);
 
     List<Review> findByBooking_Business_Id(UUID businessId);
+
+    List<Review> findByStaff_Id(UUID staffId);
+
+    /** Xodimning o'rtacha reytingi */
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT COALESCE(AVG(r.stars), 0) FROM Review r WHERE r.staff.id = :staffId")
+    double avgStarsByStaffId(@org.springframework.data.repository.query.Param("staffId") UUID staffId);
 }

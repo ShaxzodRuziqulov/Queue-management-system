@@ -41,7 +41,6 @@ public class BusinessService {
     @Transactional(readOnly = true)
     public List<BusinessDto> findAll(UUID ownerId) {
         if (ownerId != null) {
-            userService.requireUser(ownerId);
             return repository.findByOwner_Id(ownerId).stream().map(mapper::toDto).toList();
         }
         return repository.findAll().stream().map(mapper::toDto).toList();

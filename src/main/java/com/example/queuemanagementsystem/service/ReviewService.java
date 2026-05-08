@@ -1,12 +1,15 @@
 package com.example.queuemanagementsystem.service;
 
+import com.example.queuemanagementsystem.domain.Booking;
 import com.example.queuemanagementsystem.domain.Review;
+import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.dto.ReviewCreateRequest;
 import com.example.queuemanagementsystem.dto.ReviewDto;
 import com.example.queuemanagementsystem.dto.ReviewUpdateRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.ReviewMapper;
 import com.example.queuemanagementsystem.repository.ReviewRepository;
+import com.example.queuemanagementsystem.repository.StaffMemberRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -24,14 +27,23 @@ public class ReviewService {
     private final ReviewRepository repository;
     private final ReviewMapper mapper;
     private final BookingService bookingService;
+    private final StaffMemberRepository staffMemberRepository;
     private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
-    public List<ReviewDto> findAll(UUID businessId) {
+    public List<ReviewDto> findAll(UUID businessId, UUID staffId) {
+        if (staffId != null) {
+            return repository.findByStaff_Id(staffId).stream().map(mapper::toDto).toList();
+        }
         if (businessId != null) {
             return repository.findByBooking_Business_Id(businessId).stream().map(mapper::toDto).toList();
         }
         return repository.findAll().stream().map(mapper::toDto).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public double avgRating(UUID staffId) {
+        return repository.avgStarsByStaffId(staffId);
     }
 
     @Transactional(readOnly = true)
@@ -43,8 +55,13 @@ public class ReviewService {
         if (repository.existsByBooking_Id(request.getBookingId())) {
             throw new IllegalArgumentException("Bu bron uchun sharh allaqachon mavjud");
         }
+        Booking booking = bookingService.requireBooking(request.getBookingId());
         Review entity = mapper.toEntity(request);
-        entity.setBooking(bookingService.requireBooking(request.getBookingId()));
+        entity.setBooking(booking);
+        // Bookingdagi xodimni avtomatik bog'lash
+        if (booking.getStaff() != null) {
+            entity.setStaff(booking.getStaff());
+        }
         return mapper.toDto(repository.save(entity));
     }
 

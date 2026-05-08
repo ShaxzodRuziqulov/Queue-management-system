@@ -48,6 +48,10 @@ public class OfferedService extends BaseEntity{
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Xizmat uchun reklama rasmi (ixtiyoriy) */
+    @Column(name = "image_url", length = 1024)
+    private String imageUrl;
+
     @OneToMany(mappedBy = "offeredService")
     private Set<Booking> bookings = new HashSet<>();
 }

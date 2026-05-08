@@ -11,7 +11,10 @@ import java.util.UUID;
 public class ReviewDto {
     private UUID id;
     private UUID bookingId;
+    private UUID businessId;
     private int stars;
     private String comment;
+    private UUID staffId;
+    private String staffName;
     private Instant createdAt;
 }

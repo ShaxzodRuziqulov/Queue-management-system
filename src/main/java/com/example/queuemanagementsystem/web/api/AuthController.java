@@ -62,6 +62,8 @@ public class AuthController {
                 .expiresInSeconds(expiresInSeconds)
                 .userId(principal.getId())
                 .login(principal.getUsername())
+                .displayName(principal.getDisplayName())
+                .avatarUrl(principal.getAvatarUrl())
                 .businessOwner(principal.isBusinessOwner())
                 .admin(principal.isAdmin())
                 .roles(roles)

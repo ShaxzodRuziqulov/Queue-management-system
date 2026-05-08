@@ -20,4 +20,7 @@ public class OfferedServiceUpdateRequest {
     private BigDecimal basePrice;
 
     private Boolean active;
+
+    @Size(max = 1024)
+    private String imageUrl;
 }

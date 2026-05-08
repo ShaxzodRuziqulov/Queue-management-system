@@ -7,8 +7,10 @@ import com.example.queuemanagementsystem.service.OfferedServiceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,5 +53,20 @@ public class OfferedServiceController {
     public ResponseEntity<Void> delete(@PathVariable UUID businessId, @PathVariable UUID serviceId) {
         service.delete(businessId, serviceId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping(value = "/{serviceId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<OfferedServiceDto> uploadImage(
+            @PathVariable UUID businessId,
+            @PathVariable UUID serviceId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(service.uploadImage(businessId, serviceId, file));
+    }
+
+    @DeleteMapping("/{serviceId}/image")
+    public ResponseEntity<OfferedServiceDto> deleteImage(
+            @PathVariable UUID businessId,
+            @PathVariable UUID serviceId) {
+        return ResponseEntity.ok(service.deleteImage(businessId, serviceId));
     }
 }

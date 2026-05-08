@@ -16,7 +16,11 @@
       "Bash(Get-ChildItem -Path \"D:\\\\12\\\\QueueManagementSystem\\\\src\\\\main\\\\java\\\\com\\\\example\\\\queuemanagementsystem\" -Recurse -Filter \"*.java\")",
       "Bash(Select-Object FullName)",
       "Bash(ConvertTo-Json)",
-      "Bash(Get-ChildItem -Path \"D:\\\\projects\\\\ontime-busines-managment-frontend\\\\src\\\\views\\\\admin\\\\\" -Recurse -File | Select-Object FullName)"
+      "Bash(Get-ChildItem -Path \"D:\\\\projects\\\\ontime-busines-managment-frontend\\\\src\\\\views\\\\admin\\\\\" -Recurse -File | Select-Object FullName)",
+      "Bash(dir /s /b \"D:\\\\12\\\\QueueManagementSystemFront\\\\Salon-Queue\\\\src\\\\views\")",
+      "Bash(curl -s http://localhost:8080/actuator/health)",
+      "Bash(curl -s http://localhost:9092/actuator/health)",
+      "Bash(xargs grep -l \"AuthenticationResponse\\\\|AuthResponse\\\\|JwtResponse\\\\|LoginResponse\")"
     ]
   }
 }

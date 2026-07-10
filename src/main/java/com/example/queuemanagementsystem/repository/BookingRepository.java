@@ -19,6 +19,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     Page<Booking> findByBusiness_Id(UUID businessId, Pageable pageable);
 
+    Page<Booking> findByBusiness_IdAndStartAtBetween(UUID businessId, Instant start, Instant end, Pageable pageable);
+
     List<Booking> findByStaff_Id(UUID staffId);
 
     long countByStaff_Id(UUID staffId);

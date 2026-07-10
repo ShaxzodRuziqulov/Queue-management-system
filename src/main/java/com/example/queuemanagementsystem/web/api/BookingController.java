@@ -10,10 +10,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -27,8 +29,9 @@ public class BookingController {
     public ResponseEntity<Page<BookingDto>> list(
             @RequestParam(required = false) UUID customerId,
             @RequestParam(required = false) UUID businessId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(customerId, businessId, pageable));
+        return ResponseEntity.ok(service.findAll(customerId, businessId, date, pageable));
     }
 
     @GetMapping("/{id}")

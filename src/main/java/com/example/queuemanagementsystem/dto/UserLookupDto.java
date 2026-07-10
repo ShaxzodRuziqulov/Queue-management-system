@@ -11,4 +11,6 @@ public class UserLookupDto {
     private UUID id;
     private String login;
     private String displayName;
+    private String email;
+    private String phone;
 }

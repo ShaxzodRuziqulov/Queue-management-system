@@ -11,6 +11,7 @@ import com.example.queuemanagementsystem.dto.StaffMemberDto;
 import com.example.queuemanagementsystem.dto.StaffMemberUpdateRequest;
 import com.example.queuemanagementsystem.dto.StaffRegisterRequest;
 import com.example.queuemanagementsystem.dto.StaffStatsDto;
+import com.example.queuemanagementsystem.dto.UserLookupDto;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.BookingMapper;
 import com.example.queuemanagementsystem.mapper.StaffMemberMapper;
@@ -99,6 +100,7 @@ public class StaffMemberService {
         StaffMember entity = mapper.toEntity(request);
         entity.setBusiness(businessService.requireActiveAccess(businessId));
         if (request.getLinkedUserId() != null) {
+            requireNotAlreadyStaff(businessId, request.getLinkedUserId());
             AppUser user = userService.requireUser(request.getLinkedUserId());
             entity.setLinkedUser(user);
             grantStaffRole(user);
@@ -150,6 +152,27 @@ public class StaffMemberService {
      * tomonidan yangilash — xodim hisobga bog'langan/ro'yxatdan o'tgandan keyin ham
      * ma'lumotlarni to'g'rilash imkoni bo'lishi uchun.
      */
+    /**
+     * Xodimga biriktirilgan hisobning joriy login/email/telefon ma'lumotlarini qaytaradi —
+     * tahrirlash formasini oldindan to'ldirish uchun. Faqat shu biznes egasi/admin ko'ra oladi.
+     */
+    @Transactional(readOnly = true)
+    public UserLookupDto getLinkedAccountInfo(UUID businessId, UUID staffId) {
+        businessService.requireOwnerOrAdmin(businessId);
+        StaffMember entity = requireStaff(businessId, staffId);
+        AppUser linkedUser = entity.getLinkedUser();
+        if (linkedUser == null) {
+            throw new IllegalStateException("Bu xodim hech qanday hisobga bog'lanmagan");
+        }
+        return UserLookupDto.builder()
+                .id(linkedUser.getId())
+                .login(linkedUser.getUsername())
+                .displayName(linkedUser.getDisplayName())
+                .email(linkedUser.getEmail())
+                .phone(linkedUser.getPhone())
+                .build();
+    }
+
     public StaffMemberDto updateLinkedAccount(UUID businessId, UUID staffId, StaffAccountUpdateRequest request) {
         businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
@@ -169,8 +192,10 @@ public class StaffMemberService {
         businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
 
-        // Eski linked user dan ROLE_STAFF ni olib tashlash
-        if (request.getLinkedUserId() != null) {
+        boolean isNewLink = request.getLinkedUserId() != null
+                && (entity.getLinkedUser() == null || !entity.getLinkedUser().getId().equals(request.getLinkedUserId()));
+        if (isNewLink) {
+            requireNotAlreadyStaff(businessId, request.getLinkedUserId());
             if (entity.getLinkedUser() != null) {
                 revokeStaffRole(entity.getLinkedUser());
             }
@@ -178,12 +203,19 @@ public class StaffMemberService {
 
         mapper.update(entity, request);
 
-        if (request.getLinkedUserId() != null) {
+        if (isNewLink) {
             AppUser newUser = userService.requireUser(request.getLinkedUserId());
             entity.setLinkedUser(newUser);
             grantStaffRole(newUser);
         }
         return mapper.toDto(entity);
+    }
+
+    /** Bu foydalanuvchi shu biznesda allaqachon boshqa xodim yozuviga bog'langan bo'lsa, xatolik qaytaradi. */
+    private void requireNotAlreadyStaff(UUID businessId, UUID linkedUserId) {
+        if (repository.existsByBusiness_IdAndLinkedUser_Id(businessId, linkedUserId)) {
+            throw new IllegalArgumentException("Bu foydalanuvchi bu biznesda allaqachon xodim sifatida ro'yxatga olingan");
+        }
     }
 
     public void delete(UUID businessId, UUID staffId) {
@@ -203,6 +235,15 @@ public class StaffMemberService {
         UUID currentUserId = currentUserService.getCurrentUserId();
         return repository.findByLinkedUser_Id(currentUserId)
                 .map(sm -> sm.getId().equals(staffId))
+                .orElse(false);
+    }
+
+    /** Joriy foydalanuvchi berilgan biznesning (istalgan) xodimimi — bron yaratish huquqini tekshirish uchun. */
+    @Transactional(readOnly = true)
+    public boolean isCurrentUserStaffOfBusiness(UUID businessId) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        return repository.findByLinkedUser_Id(currentUserId)
+                .map(sm -> sm.getBusiness().getId().equals(businessId))
                 .orElse(false);
     }
 

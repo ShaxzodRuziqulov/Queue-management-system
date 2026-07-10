@@ -21,8 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -68,7 +70,7 @@ public class BookingService {
     private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
-    public Page<BookingDto> findAll(UUID customerId, UUID businessId, Pageable pageable) {
+    public Page<BookingDto> findAll(UUID customerId, UUID businessId, LocalDate date, Pageable pageable) {
         if (customerId != null) {
             if (!currentUserService.isAdmin() && !customerId.equals(currentUserService.getCurrentUserId())) {
                 throw new AccessDeniedException("Boshqa mijozning bronlarini ko'rish mumkin emas");
@@ -78,6 +80,11 @@ public class BookingService {
         }
         if (businessId != null) {
             businessService.requireOwnerOrAdmin(businessId);
+            if (date != null) {
+                Instant dayStart = date.atStartOfDay(BUSINESS_ZONE).toInstant();
+                Instant dayEnd = date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+                return repository.findByBusiness_IdAndStartAtBetween(businessId, dayStart, dayEnd, pageable).map(mapper::toDto);
+            }
             return repository.findByBusiness_Id(businessId, pageable).map(mapper::toDto);
         }
         if (!currentUserService.isAdmin()) {
@@ -99,20 +106,33 @@ public class BookingService {
         if (!request.getEndAt().isAfter(request.getStartAt())) {
             throw new IllegalArgumentException("Tugash vaqti boshlanishdan keyin bo'lishi kerak");
         }
-        UUID customerId = request.getCustomerId();
-        if (!currentUserService.isAdmin()) {
-            customerId = currentUserService.getCurrentUserId();
+        boolean isBusinessManager = businessService.isOwnerOrAdmin(request.getBusinessId());
+        boolean isBusinessStaff = staffMemberService.isCurrentUserStaffOfBusiness(request.getBusinessId());
+        boolean isSelfBooking = request.getCustomerId() != null
+                && request.getCustomerId().equals(currentUserService.getCurrentUserId());
+        if (!currentUserService.isAdmin() && !isBusinessManager && !isBusinessStaff && !isSelfBooking) {
+            throw new AccessDeniedException("Faqat biznes egasi, xodimi yoki o'zingiz uchun bron yarata olasiz");
         }
         OfferedService offeredService = offeredServiceService.requireOfferedService(
                 request.getBusinessId(), request.getOfferedServiceId());
         Booking entity = mapper.toEntity(request);
-        entity.setCustomer(userService.requireUser(customerId));
+        if (request.getCustomerId() != null) {
+            entity.setCustomer(userService.requireUser(request.getCustomerId()));
+        } else if (!StringUtils.hasText(request.getGuestName())) {
+            throw new IllegalArgumentException("Mijoz ismini kiriting");
+        }
         // Biznes trial/obuna faolligini tekshirish
         Business business = businessService.requireActiveAccess(request.getBusinessId());
         entity.setBusiness(business);
         entity.setOfferedService(offeredService);
-        if (entity.getStatus() == null) {
+        // Mijoz o'zi band qilganda boshlang'ich holat har doim PENDING (holatni o'zi belgilab bo'lmaydi).
+        // Biznes egasi/xodimi/admin o'zi bron yaratsa — bu allaqachon tasdiqlangan hisoblanadi,
+        // qayta "tasdiqlash" bosishga majburlanmasin (agar so'rovda aniq holat ko'rsatilmagan bo'lsa).
+        boolean isTrustedActor = currentUserService.isAdmin() || isBusinessManager || isBusinessStaff;
+        if (!isTrustedActor) {
             entity.setStatus(BookingStatus.PENDING);
+        } else if (entity.getStatus() == null) {
+            entity.setStatus(BookingStatus.CONFIRMED);
         }
         StaffMember staff = null;
         if (request.getStaffId() != null) {
@@ -158,7 +178,7 @@ public class BookingService {
 
     private boolean isParticipant(Booking booking) {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        boolean isCustomer = booking.getCustomer().getId().equals(currentUserId);
+        boolean isCustomer = booking.getCustomer() != null && booking.getCustomer().getId().equals(currentUserId);
         boolean isBusinessManager = businessService.isOwnerOrAdmin(booking.getBusiness().getId());
         boolean isAssignedStaff = booking.getStaff() != null
                 && staffMemberService.isCurrentUserLinkedTo(booking.getStaff().getId());
@@ -176,7 +196,7 @@ public class BookingService {
             return;
         }
         UUID currentUserId = currentUserService.getCurrentUserId();
-        boolean isCustomer = booking.getCustomer().getId().equals(currentUserId);
+        boolean isCustomer = booking.getCustomer() != null && booking.getCustomer().getId().equals(currentUserId);
         boolean isBusinessManager = businessService.isOwnerOrAdmin(booking.getBusiness().getId());
         boolean isAssignedStaff = booking.getStaff() != null
                 && staffMemberService.isCurrentUserLinkedTo(booking.getStaff().getId());

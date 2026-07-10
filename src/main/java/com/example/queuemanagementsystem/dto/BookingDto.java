@@ -12,6 +12,9 @@ import java.util.UUID;
 public class BookingDto {
     private UUID id;
     private UUID customerId;
+    private String customerName;
+    private String guestName;
+    private String guestPhone;
     private UUID businessId;
     private String businessName;
     private UUID offeredServiceId;

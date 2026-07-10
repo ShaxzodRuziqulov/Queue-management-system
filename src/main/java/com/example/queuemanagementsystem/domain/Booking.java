@@ -31,9 +31,22 @@ import java.util.UUID;
 @ToString(onlyExplicitlyIncluded = true)
 public class Booking extends BaseEntity{
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    /**
+     * Ro'yxatdan o'tgan mijoz hisobi — hozircha ishlatilmaydi (mijoz ilovasi alohida loyiha
+     * sifatida rejalashtirilgan, keyinchalik ulanadi). Bron odatda {@link #guestName} orqali
+     * xodim/biznes egasi tomonidan kiritiladi.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
     private AppUser customer;
+
+    /** Hisobsiz (mehmon) mijozning ismi — customer bog'lanmagan bronlar uchun majburiy. */
+    @Column(name = "guest_name", length = 200)
+    private String guestName;
+
+    /** Hisobsiz mijozning telefon raqami (ixtiyoriy). */
+    @Column(name = "guest_phone", length = 32)
+    private String guestPhone;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id", nullable = false)

@@ -5,6 +5,7 @@ import com.example.queuemanagementsystem.dto.StaffMemberCreateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberDto;
 import com.example.queuemanagementsystem.dto.StaffMemberUpdateRequest;
 import com.example.queuemanagementsystem.dto.StaffRegisterRequest;
+import com.example.queuemanagementsystem.dto.UserLookupDto;
 import com.example.queuemanagementsystem.service.StaffMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +57,14 @@ public class StaffMemberController {
             @PathVariable UUID staffId,
             @Valid @RequestBody StaffRegisterRequest request) {
         return ResponseEntity.ok(service.registerAccountForExisting(businessId, staffId, request));
+    }
+
+    /** Bog'langan hisobning joriy login/email/telefon ma'lumotini qaytaradi (tahrirlash formasini to'ldirish uchun). */
+    @GetMapping("/{staffId}/account")
+    public ResponseEntity<UserLookupDto> getAccount(
+            @PathVariable UUID businessId,
+            @PathVariable UUID staffId) {
+        return ResponseEntity.ok(service.getLinkedAccountInfo(businessId, staffId));
     }
 
     /** Bog'langan hisobning ism/email/telefon/parolini yangilaydi. */

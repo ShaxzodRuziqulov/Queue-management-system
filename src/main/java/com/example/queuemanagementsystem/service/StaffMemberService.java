@@ -1,13 +1,15 @@
 package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
-import com.example.queuemanagementsystem.domain.Role;
+import com.example.queuemanagementsystem.domain.Business;
 import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.domain.enums.BookingStatus;
 import com.example.queuemanagementsystem.dto.BookingDto;
+import com.example.queuemanagementsystem.dto.StaffAccountUpdateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberCreateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberDto;
 import com.example.queuemanagementsystem.dto.StaffMemberUpdateRequest;
+import com.example.queuemanagementsystem.dto.StaffRegisterRequest;
 import com.example.queuemanagementsystem.dto.StaffStatsDto;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.BookingMapper;
@@ -53,14 +55,14 @@ public class StaffMemberService {
     /** Joriy foydalanuvchining xodim profilini qaytaradi */
     @Transactional(readOnly = true)
     public StaffMemberDto getMyProfile() {
-        UUID userId = currentUserService.requireUserId();
+        UUID userId = currentUserService.getCurrentUserId();
         return mapper.toDto(requireStaffByUserId(userId));
     }
 
     /** Joriy xodimga biriktirilgan bronlarni qaytaradi */
     @Transactional(readOnly = true)
     public List<BookingDto> getMyBookings() {
-        UUID userId = currentUserService.requireUserId();
+        UUID userId = currentUserService.getCurrentUserId();
         StaffMember staff = requireStaffByUserId(userId);
         return bookingRepository.findByStaff_Id(staff.getId())
                 .stream().map(bookingMapper::toDto).toList();
@@ -69,7 +71,7 @@ public class StaffMemberService {
     /** Joriy xodimning statistikasini qaytaradi */
     @Transactional(readOnly = true)
     public StaffStatsDto getMyStats() {
-        UUID userId = currentUserService.requireUserId();
+        UUID userId = currentUserService.getCurrentUserId();
         StaffMember staff = requireStaffByUserId(userId);
         UUID staffId = staff.getId();
 
@@ -93,6 +95,7 @@ public class StaffMemberService {
     }
 
     public StaffMemberDto create(UUID businessId, StaffMemberCreateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = mapper.toEntity(request);
         entity.setBusiness(businessService.requireActiveAccess(businessId));
         if (request.getLinkedUserId() != null) {
@@ -101,6 +104,65 @@ public class StaffMemberService {
             grantStaffRole(user);
         }
         return mapper.toDto(repository.save(entity));
+    }
+
+    /**
+     * Xodim uchun bir vaqtning o'zida yangi foydalanuvchi hisobi (login/parol) yaratadi
+     * va uni shu xodim yozuviga bog'laydi — xodim keyin shu login bilan tizimga kirib,
+     * o'z portalidan foydalana oladi.
+     */
+    public StaffMemberDto registerStaff(UUID businessId, StaffRegisterRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
+        Business business = businessService.requireActiveAccess(businessId);
+        AppUser newUser = userService.createAccountForStaff(
+                request.getLogin(), request.getPassword(), request.getDisplayName(),
+                request.getEmail(), request.getPhone());
+        grantStaffRole(newUser);
+
+        StaffMember entity = new StaffMember();
+        entity.setBusiness(business);
+        entity.setDisplayName(request.getDisplayName());
+        entity.setLinkedUser(newUser);
+        entity.setActive(true);
+        return mapper.toDto(repository.save(entity));
+    }
+
+    /**
+     * Avval "hisobsiz" yaratilgan xodimga keyinroq yangi foydalanuvchi hisobi
+     * (login/parol) ochib beradi va shu xodim yozuviga bog'laydi.
+     */
+    public StaffMemberDto registerAccountForExisting(UUID businessId, UUID staffId, StaffRegisterRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
+        StaffMember entity = requireStaff(businessId, staffId);
+        if (entity.getLinkedUser() != null) {
+            throw new IllegalStateException("Bu xodim allaqachon foydalanuvchi hisobiga bog'langan");
+        }
+        AppUser newUser = userService.createAccountForStaff(
+                request.getLogin(), request.getPassword(), request.getDisplayName(),
+                request.getEmail(), request.getPhone());
+        grantStaffRole(newUser);
+        entity.setLinkedUser(newUser);
+        return mapper.toDto(entity);
+    }
+
+    /**
+     * Xodimga biriktirilgan hisobning ism/email/telefon/parolini biznes egasi
+     * tomonidan yangilash — xodim hisobga bog'langan/ro'yxatdan o'tgandan keyin ham
+     * ma'lumotlarni to'g'rilash imkoni bo'lishi uchun.
+     */
+    public StaffMemberDto updateLinkedAccount(UUID businessId, UUID staffId, StaffAccountUpdateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
+        StaffMember entity = requireStaff(businessId, staffId);
+        AppUser linkedUser = entity.getLinkedUser();
+        if (linkedUser == null) {
+            throw new IllegalStateException("Bu xodim hech qanday hisobga bog'lanmagan");
+        }
+        userService.updateStaffAccountFields(
+                linkedUser, request.getDisplayName(), request.getEmail(), request.getPhone(), request.getPassword());
+        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
+            entity.setDisplayName(request.getDisplayName().trim());
+        }
+        return mapper.toDto(entity);
     }
 
     public StaffMemberDto update(UUID businessId, UUID staffId, StaffMemberUpdateRequest request) {
@@ -134,6 +196,16 @@ public class StaffMemberService {
         repository.delete(entity);
     }
 
+    /** Joriy foydalanuvchi berilgan xodim yozuviga bog'langanmi (bron ruxsatlarini tekshirish uchun). */
+    @Transactional(readOnly = true)
+    public boolean isCurrentUserLinkedTo(UUID staffId) {
+        if (staffId == null) return false;
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        return repository.findByLinkedUser_Id(currentUserId)
+                .map(sm -> sm.getId().equals(staffId))
+                .orElse(false);
+    }
+
     StaffMember requireStaff(UUID businessId, UUID staffId) {
         return repository.findByBusiness_IdAndId(businessId, staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Xodim topilmadi: " + staffId));
@@ -145,16 +217,10 @@ public class StaffMemberService {
     }
 
     private void grantStaffRole(AppUser user) {
-        Role staffRole = roleRepository.findByName("ROLE_STAFF");
-        if (staffRole != null) {
-            user.getRoles().add(staffRole);
-        }
+        roleRepository.assignRoleIfPresent(user, "ROLE_STAFF");
     }
 
     private void revokeStaffRole(AppUser user) {
-        Role staffRole = roleRepository.findByName("ROLE_STAFF");
-        if (staffRole != null) {
-            user.getRoles().remove(staffRole);
-        }
+        roleRepository.removeRoleIfPresent(user, "ROLE_STAFF");
     }
 }

@@ -2,6 +2,8 @@ package com.example.queuemanagementsystem.web.error;
 
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.exception.BusinessAccessDeniedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class RestExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(RestExceptionHandler.class);
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> notFound(ResourceNotFoundException ex) {
@@ -48,8 +52,8 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> serviceUnavailable(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+    public ResponseEntity<ErrorResponse> conflict(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.builder().message(ex.getMessage()).build());
     }
 
@@ -57,5 +61,12 @@ public class RestExceptionHandler {
     public ResponseEntity<ErrorResponse> paymentRequired(BusinessAccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
                 .body(ErrorResponse.builder().message(ex.getMessage()).build());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> unexpected(Exception ex) {
+        log.error("Kutilmagan xatolik", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.builder().message("Kutilmagan xatolik yuz berdi").build());
     }
 }

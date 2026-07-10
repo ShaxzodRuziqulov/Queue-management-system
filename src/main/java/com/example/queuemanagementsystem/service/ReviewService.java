@@ -56,6 +56,13 @@ public class ReviewService {
             throw new IllegalArgumentException("Bu bron uchun sharh allaqachon mavjud");
         }
         Booking booking = bookingService.requireBooking(request.getBookingId());
+        if (!currentUserService.isAdmin()
+                && !booking.getCustomer().getId().equals(currentUserService.getCurrentUserId())) {
+            throw new AccessDeniedException("Faqat o'z bronigiz uchun sharh qoldira olasiz");
+        }
+        if (booking.getStatus() != com.example.queuemanagementsystem.domain.enums.BookingStatus.COMPLETED) {
+            throw new IllegalArgumentException("Faqat yakunlangan bronlar uchun sharh qoldirish mumkin");
+        }
         Review entity = mapper.toEntity(request);
         entity.setBooking(booking);
         // Bookingdagi xodimni avtomatik bog'lash
@@ -85,7 +92,7 @@ public class ReviewService {
 
     private void requireReviewerOrAdmin(Review review) {
         if (currentUserService.isAdmin()) return;
-        UUID currentId = currentUserService.requireUserId();
+        UUID currentId = currentUserService.getCurrentUserId();
         UUID reviewerId = review.getBooking().getCustomer().getId();
         if (!reviewerId.equals(currentId)) {
             throw new AccessDeniedException("Bu sharhga ruxsat yo'q");

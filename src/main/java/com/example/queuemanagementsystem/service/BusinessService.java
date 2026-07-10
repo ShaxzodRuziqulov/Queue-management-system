@@ -2,7 +2,6 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Business;
-import com.example.queuemanagementsystem.domain.Role;
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import com.example.queuemanagementsystem.domain.enums.ReviewAction;
 import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
@@ -17,13 +16,14 @@ import com.example.queuemanagementsystem.repository.BusinessRepository;
 import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,11 +39,11 @@ public class BusinessService {
     private final RoleRepository roleRepository;
 
     @Transactional(readOnly = true)
-    public List<BusinessDto> findAll(UUID ownerId) {
+    public Page<BusinessDto> findAll(UUID ownerId, Pageable pageable) {
         if (ownerId != null) {
-            return repository.findByOwner_Id(ownerId).stream().map(mapper::toDto).toList();
+            return repository.findByOwner_Id(ownerId, pageable).map(mapper::toDto);
         }
-        return repository.findAll().stream().map(mapper::toDto).toList();
+        return repository.findAll(pageable).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -54,20 +54,11 @@ public class BusinessService {
     public BusinessDto create(BusinessCreateRequest request) {
         UUID ownerId = request.getOwnerId();
         if (!currentUserService.isAdmin()) {
-            ownerId = currentUserService.requireUserId();
+            ownerId = currentUserService.getCurrentUserId();
         }
         AppUser owner = userService.requireUser(ownerId);
-
-        // Agar owner hali ROLE_BUSINESS_OWNER roliga ega bo'lmasa, avtomatik berish
-        boolean alreadyOwner = owner.getRoles().stream()
-                .map(Role::getName)
-                .anyMatch("ROLE_BUSINESS_OWNER"::equals);
-        if (!alreadyOwner) {
-            Role ownerRole = roleRepository.findByName("ROLE_BUSINESS_OWNER");
-            if (ownerRole != null) {
-                owner.getRoles().add(ownerRole);
-            }
-        }
+        // Owner hali ROLE_BUSINESS_OWNER roliga ega bo'lmasa, avtomatik beriladi (Set — takror qo'shilmaydi)
+        roleRepository.assignRoleIfPresent(owner, "ROLE_BUSINESS_OWNER");
 
         Business entity = mapper.toEntity(request);
         entity.setOwner(owner);
@@ -145,18 +136,21 @@ public class BusinessService {
     }
 
     public void requireOwnerOrAdmin(UUID businessId) {
-        if (currentUserService.isAdmin()) return;
-        Business entity = requireBusiness(businessId);
-        UUID currentUserId = currentUserService.requireUserId();
-        if (!entity.getOwner().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("Bu biznesga ruxsat yo'q");
-        }
+        requireOwnerOrAdmin(requireBusiness(businessId));
+    }
+
+    /** requireOwnerOrAdmin bilan bir xil tekshiruv, lekin istisno otmasdan boolean qaytaradi. */
+    public boolean isOwnerOrAdmin(UUID businessId) {
+        return isOwnerOrAdmin(requireBusiness(businessId));
+    }
+
+    private boolean isOwnerOrAdmin(Business entity) {
+        return currentUserService.isAdmin()
+                || entity.getOwner().getId().equals(currentUserService.getCurrentUserId());
     }
 
     private void requireOwnerOrAdmin(Business entity) {
-        if (currentUserService.isAdmin()) return;
-        UUID currentUserId = currentUserService.requireUserId();
-        if (!entity.getOwner().getId().equals(currentUserId)) {
+        if (!isOwnerOrAdmin(entity)) {
             throw new AccessDeniedException("Bu biznesga ruxsat yo'q");
         }
     }

@@ -5,19 +5,27 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+    // SecurityConfig'dagi permitAll yo'llari bilan mos — bu yerlarda eski/yaroqsiz
+    // Authorization header borligi so'rovni bloklamasligi kerak.
+    private static final List<String> PERMIT_ALL_PATHS = List.of("/api/v1/auth/**", "/uploads/**", "/error");
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -27,6 +35,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.handlerExceptionResolver = handlerExceptionResolver;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        if (HttpMethod.OPTIONS.matches(request.getMethod())) {
+            return true;
+        }
+        String path = request.getServletPath();
+        return PERMIT_ALL_PATHS.stream().anyMatch(pattern -> PATH_MATCHER.match(pattern, path));
     }
 
     @Override

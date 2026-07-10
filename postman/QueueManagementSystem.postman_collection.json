@@ -15,7 +15,9 @@
     { "key": "serviceId",  "value": "00000000-0000-0000-0000-000000000005",           "type": "string" },
     { "key": "staffId",    "value": "00000000-0000-0000-0000-000000000006",           "type": "string" },
     { "key": "bookingId",  "value": "00000000-0000-0000-0000-000000000007",           "type": "string" },
-    { "key": "reviewId",   "value": "00000000-0000-0000-0000-000000000008",           "type": "string" }
+    { "key": "reviewId",   "value": "00000000-0000-0000-0000-000000000008",           "type": "string" },
+    { "key": "avatarFile", "value": "C:/tmp/avatar.jpg",                                "type": "string" },
+    { "key": "serviceImageFile", "value": "C:/tmp/service.jpg",                         "type": "string" }
   ],
   "auth": {
     "type": "bearer",
@@ -262,6 +264,25 @@
             "method": "DELETE",
             "header": [],
             "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Upload user avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{avatarFile}}"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}/avatar",
+            "description": "Multipart upload. `file` maydoni majburiy."
           }
         }
       ]
@@ -624,6 +645,33 @@
             "header": [],
             "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/services/{{serviceId}}"
           }
+        },
+        {
+          "name": "Upload service image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "{{serviceImageFile}}"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/services/{{serviceId}}/image",
+            "description": "Multipart upload. `file` maydoni majburiy."
+          }
+        },
+        {
+          "name": "Delete service image",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/services/{{serviceId}}/image"
+          }
         }
       ]
     },
@@ -794,6 +842,37 @@
     },
 
     {
+      "name": "Staff Portal",
+      "description": "ROLE_STAFF foydalanuvchi uchun shaxsiy endpointlar.",
+      "item": [
+        {
+          "name": "My staff profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/staff/me"
+          }
+        },
+        {
+          "name": "My staff bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/staff/me/bookings"
+          }
+        },
+        {
+          "name": "My staff stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/staff/me/stats"
+          }
+        }
+      ]
+    },
+
+    {
       "name": "🛡️ Admin",
       "description": "Faqat ROLE_ADMIN uchun. Audit log va boshqa admin endpointlari.",
       "item": [
@@ -881,6 +960,40 @@
             "method": "GET",
             "header": [],
             "url": "{{baseUrl}}/api/v1/reviews"
+          }
+        },
+        {
+          "name": "List reviews by business",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews?businessId={{businessId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews"],
+              "query": [{ "key": "businessId", "value": "{{businessId}}" }]
+            }
+          }
+        },
+        {
+          "name": "List reviews by staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews?staffId={{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews"],
+              "query": [{ "key": "staffId", "value": "{{staffId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Get staff average rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/reviews/staff/{{staffId}}/avg"
           }
         },
         {

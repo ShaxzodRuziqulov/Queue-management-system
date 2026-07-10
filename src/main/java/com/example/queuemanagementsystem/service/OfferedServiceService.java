@@ -37,6 +37,7 @@ public class OfferedServiceService {
     }
 
     public OfferedServiceDto create(UUID businessId, OfferedServiceCreateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
         OfferedService entity = mapper.toEntity(request);
         // Biznes trial/obuna faolligini tekshirish
         entity.setBusiness(businessService.requireActiveAccess(businessId));

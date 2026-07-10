@@ -17,17 +17,6 @@ public interface AppUserMapper extends EntityMapper<AppUserDto, AppUser> {
     @Mapping(target = "businessOwner", ignore = true)
     AppUserDto toDto(AppUser entity);
 
-    @Override
-    @BeanMapping(unmappedSourcePolicy = ReportingPolicy.IGNORE)
-    @Mapping(source = "login", target = "username")
-    @Mapping(target = "roles", ignore = true)
-    @Mapping(target = "passwordHash", ignore = true)
-    @Mapping(target = "ownedBusinesses", ignore = true)
-    @Mapping(target = "bookings", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    AppUser toEntity(AppUserDto dto);
-
     @Mapping(source = "login", target = "username")
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "id", ignore = true)

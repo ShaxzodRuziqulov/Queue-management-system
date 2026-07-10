@@ -8,11 +8,14 @@ import com.example.queuemanagementsystem.dto.BusinessUpdateRequest;
 import com.example.queuemanagementsystem.service.BusinessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -23,8 +26,10 @@ public class BusinessController {
     private final BusinessService service;
 
     @GetMapping
-    public ResponseEntity<List<BusinessDto>> list(@RequestParam(required = false) UUID ownerId) {
-        return ResponseEntity.ok(service.findAll(ownerId));
+    public ResponseEntity<Page<BusinessDto>> list(
+            @RequestParam(required = false) UUID ownerId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(service.findAll(ownerId, pageable));
     }
 
     @GetMapping("/{id}")

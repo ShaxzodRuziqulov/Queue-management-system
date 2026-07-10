@@ -16,5 +16,6 @@ public class ReviewDto {
     private String comment;
     private UUID staffId;
     private String staffName;
+    private String customerName;
     private Instant createdAt;
 }

@@ -8,7 +8,7 @@ import java.util.Set;
 @Data
 public class AppUserUpdateRequest {
 
-    @Size(min = 8, max = 128)
+    @Size(min = 4, max = 128)
     private String password;
 
     @Size(max = 120)

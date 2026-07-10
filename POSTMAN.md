@@ -1,9 +1,11 @@
 # Postman collection
 
-Tayyor fayl (Postman **Import → File**):
+Tayyor import fayl:
 
-**`postman/QueueManagementSystem.postman_collection.json`**
+`postman/QueueManagementSystem.postman_collection.json`
 
-Qisqa yo‘riqnoma: **`postman/README.md`**
+Qisqa yo'riqnoma:
 
-Eski usul (JSONni markdown ichidan nusxalash) kerak emas — shu `.json` faylni import qiling.
+`postman/README.md`
+
+Eski usulda JSON'ni markdown ichidan nusxalash kerak emas. `.json` faylni to'g'ridan-to'g'ri import qiling.

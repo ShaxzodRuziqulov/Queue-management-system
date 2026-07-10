@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -46,5 +47,26 @@ public class PreInject {
             admin.setRoles(Set.of(roleRepository.findByName("ROLE_ADMIN")));
             userRepository.save(admin);
         }
+
+        backfillMissingNames();
+    }
+
+    /**
+     * displayName bor-u, firstName/lastName bo'sh qolgan eski yozuvlarni to'ldiradi
+     * (masalan, /register orqali ilgari yaratilgan hisoblar). Har safar ishga
+     * tushirilganda xavfsiz — faqat ikkalasi ham bo'sh bo'lgan yozuvlarga tegadi.
+     */
+    private void backfillMissingNames() {
+        List<AppUser> missing = userRepository.findAll().stream()
+                .filter(u -> !StringUtils.hasText(u.getFirstName()) && !StringUtils.hasText(u.getLastName()))
+                .toList();
+        if (missing.isEmpty()) return;
+        for (AppUser u : missing) {
+            String source = StringUtils.hasText(u.getDisplayName()) ? u.getDisplayName() : u.getUsername();
+            String[] parts = source.trim().split("\\s+", 2);
+            u.setFirstName(parts[0]);
+            u.setLastName(parts.length > 1 ? parts[1] : null);
+        }
+        userRepository.saveAll(missing);
     }
 }

@@ -13,8 +13,11 @@ public class BookingDto {
     private UUID id;
     private UUID customerId;
     private UUID businessId;
+    private String businessName;
     private UUID offeredServiceId;
+    private String offeredServiceName;
     private UUID staffId;
+    private String staffName;
     private Instant startAt;
     private Instant endAt;
     private BookingStatus status;

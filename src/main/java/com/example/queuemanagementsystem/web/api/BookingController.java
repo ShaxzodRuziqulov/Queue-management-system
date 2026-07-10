@@ -6,11 +6,14 @@ import com.example.queuemanagementsystem.dto.BookingUpdateRequest;
 import com.example.queuemanagementsystem.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -21,10 +24,11 @@ public class BookingController {
     private final BookingService service;
 
     @GetMapping
-    public ResponseEntity<List<BookingDto>> list(
+    public ResponseEntity<Page<BookingDto>> list(
             @RequestParam(required = false) UUID customerId,
-            @RequestParam(required = false) UUID businessId) {
-        return ResponseEntity.ok(service.findAll(customerId, businessId));
+            @RequestParam(required = false) UUID businessId,
+            @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(service.findAll(customerId, businessId, pageable));
     }
 
     @GetMapping("/{id}")

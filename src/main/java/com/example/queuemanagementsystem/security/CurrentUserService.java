@@ -1,33 +1,25 @@
 package com.example.queuemanagementsystem.security;
 
-import com.example.queuemanagementsystem.domain.AppUser;
-import com.example.queuemanagementsystem.repository.AppUserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+/**
+ * Joriy so'rovning autentifikatsiya kontekstidan foydalanuvchi ma'lumotini o'qiydi.
+ * {@link AppUserPrincipal} JWT filtrida bir marta bazadan yuklanadi va shu yerda
+ * qayta ishlatiladi — har bir chaqiruvda alohida baza so'rovi yubormaydi.
+ */
 @Service
-@RequiredArgsConstructor
 public class CurrentUserService {
 
-    private final AppUserRepository repository;
-
-    public AppUser getCurrentUser() {
-        String username = getCurrentUsername();
-        return repository.findWithRolesByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("Foydalanuvchi konteksti topilmadi"));
-    }
-
     public UUID getCurrentUserId() {
-        return getCurrentUser().getId();
-    }
-
-    /** BusinessService va AppUserService eski kodi bilan moslik uchun */
-    public UUID requireUserId() {
-        return getCurrentUserId();
+        Authentication auth = getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof AppUserPrincipal principal) {
+            return principal.getId();
+        }
+        throw new IllegalStateException("Foydalanuvchi konteksti topilmadi");
     }
 
     public String getCurrentUsername() {

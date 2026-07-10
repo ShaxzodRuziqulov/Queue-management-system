@@ -46,6 +46,10 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // ── Xodimni hisobga bog'lash uchun login qidiruvi ────────
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/by-login/**")
+                            .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+
                         // ── ADMIN only ───────────────────────────────────────────
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,    "/api/v1/users").hasRole("ADMIN")
@@ -65,6 +69,9 @@ public class SecurityConfig {
 
                         // ── Staff management ─────────────────────────────────────
                         .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff/*/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/staff/*/account").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 

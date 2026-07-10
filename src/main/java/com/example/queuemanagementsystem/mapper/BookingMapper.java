@@ -7,18 +7,19 @@ import com.example.queuemanagementsystem.dto.BookingUpdateRequest;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring")
 public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
 
     @Mapping(target = "customerId", source = "customer.id")
     @Mapping(target = "businessId", source = "business.id")
+    @Mapping(target = "businessName", source = "business.name")
     @Mapping(target = "offeredServiceId", source = "offeredService.id")
+    @Mapping(target = "offeredServiceName", source = "offeredService.name")
     @Mapping(target = "staffId", source = "staff.id")
+    @Mapping(target = "staffName", source = "staff.displayName")
     BookingDto toDto(Booking entity);
 
     @Mapping(target = "id", ignore = true)

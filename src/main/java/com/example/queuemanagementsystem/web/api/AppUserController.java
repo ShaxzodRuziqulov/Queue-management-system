@@ -3,6 +3,7 @@ package com.example.queuemanagementsystem.web.api;
 import com.example.queuemanagementsystem.dto.AppUserCreateRequest;
 import com.example.queuemanagementsystem.dto.AppUserDto;
 import com.example.queuemanagementsystem.dto.AppUserUpdateRequest;
+import com.example.queuemanagementsystem.dto.UserLookupDto;
 import com.example.queuemanagementsystem.service.AppUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,12 @@ public class AppUserController {
     @GetMapping("/{id}")
     public ResponseEntity<AppUserDto> get(@PathVariable UUID id) {
         return ResponseEntity.ok(service.get(id));
+    }
+
+    /** Xodimni mavjud foydalanuvchi hisobiga bog'lash uchun login bo'yicha qidirish (minimal ma'lumot). */
+    @GetMapping("/by-login/{login}")
+    public ResponseEntity<UserLookupDto> byLogin(@PathVariable String login) {
+        return ResponseEntity.ok(service.findByLogin(login));
     }
 
     @PostMapping

@@ -37,8 +37,9 @@ public class BusinessHoursService {
     }
 
     public BusinessHoursDto create(UUID businessId, BusinessHoursCreateRequest request) {
+        businessService.requireOwnerOrAdmin(businessId);
         BusinessHours entity = mapper.toEntity(request);
-        entity.setBusiness(businessService.requireBusiness(businessId));
+        entity.setBusiness(businessService.requireActiveAccess(businessId));
         return mapper.toDto(repository.save(entity));
     }
 

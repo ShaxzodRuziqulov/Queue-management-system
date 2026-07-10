@@ -64,6 +64,7 @@ public class AuditLogService {
                 .entityType(log.getEntityType())
                 .entityId(log.getEntityId())
                 .details(log.getDetails())
+                .createdAt(log.getCreatedAt())
                 .build();
     }
 }

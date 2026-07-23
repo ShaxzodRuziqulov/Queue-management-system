@@ -5,9 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -16,17 +14,14 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "reviews",
-        uniqueConstraints = @UniqueConstraint(name = "uk_reviews_booking", columnNames = "booking_id")
-)
+@Table(name = "reviews")
 @Getter
 @Setter
 @ToString(onlyExplicitlyIncluded = true)
 public class Review extends BaseEntity{
 
-    @OneToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_id", nullable = false, unique = true)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false)
     private Booking booking;
 
     @Column(nullable = false)

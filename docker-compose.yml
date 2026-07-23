@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: qms
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -25,9 +25,12 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://db:5432/qms
       - DB_USERNAME=postgres
-      - DB_PASSWORD=123
-      - JWT_SECRET=supersecretkeyformyqueuemanagementsystemsupersecretkey
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SECRET_KEY=${JWT_SECRET}
       - JWT_EXPIRATION_MS=86400000
+      - CORS_ORIGINS=${CORS_ORIGINS}
+    volumes:
+      - ./uploads:/app/uploads
     depends_on:
       - db
     networks:

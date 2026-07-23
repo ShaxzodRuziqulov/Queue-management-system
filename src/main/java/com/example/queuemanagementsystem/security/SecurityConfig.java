@@ -50,6 +50,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-login/**")
                             .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
+                        // ── Ommaviy ko'rish: mijoz tizimga kirmasdan ham bizneslar/xizmatlarni
+                        //    ko'ra oladi — faqat bron qilishda tizimga kirish talab qilinadi ──
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses", "/api/v1/businesses/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/services", "/api/v1/businesses/*/services/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/staff", "/api/v1/businesses/*/staff/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/hours", "/api/v1/businesses/*/hours/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reviews").permitAll()
+
                         // ── ADMIN only ───────────────────────────────────────────
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET,    "/api/v1/users").hasRole("ADMIN")

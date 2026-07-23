@@ -52,9 +52,6 @@ public class ReviewService {
     }
 
     public ReviewDto create(ReviewCreateRequest request) {
-        if (repository.existsByBooking_Id(request.getBookingId())) {
-            throw new IllegalArgumentException("Bu bron uchun sharh allaqachon mavjud");
-        }
         Booking booking = bookingService.requireBooking(request.getBookingId());
         boolean isBookingCustomer = booking.getCustomer() != null
                 && booking.getCustomer().getId().equals(currentUserService.getCurrentUserId());

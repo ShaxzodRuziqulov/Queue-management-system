@@ -28,7 +28,6 @@ public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "offeredService", ignore = true)
     @Mapping(target = "staff", ignore = true)
-    @Mapping(target = "review", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Booking toEntity(BookingCreateRequest request);
@@ -39,7 +38,6 @@ public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "offeredService", ignore = true)
     @Mapping(target = "staff", ignore = true)
-    @Mapping(target = "review", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget Booking entity, BookingUpdateRequest request);

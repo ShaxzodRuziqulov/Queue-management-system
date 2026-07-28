@@ -46,6 +46,10 @@ public class SecurityConfig {
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // ── API hujjatlari (Swagger / OpenAPI) ───────────────────
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+
                         // ── Xodimni hisobga bog'lash uchun login qidiruvi ────────
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-login/**")
                             .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")

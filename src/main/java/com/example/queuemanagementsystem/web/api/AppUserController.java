@@ -1,6 +1,7 @@
 package com.example.queuemanagementsystem.web.api;
 
 import com.example.queuemanagementsystem.dto.AppUserCreateRequest;
+import com.example.queuemanagementsystem.dto.ChangePasswordRequest;
 import com.example.queuemanagementsystem.dto.AppUserDto;
 import com.example.queuemanagementsystem.dto.AppUserUpdateRequest;
 import com.example.queuemanagementsystem.dto.UserLookupDto;
@@ -39,6 +40,15 @@ public class AppUserController {
         return ResponseEntity.ok(service.findByLogin(login));
     }
 
+    /**
+     * Telefon raqami bo'yicha ro'yxatdagi mijozni qidirish — xodim mijozni qo'lda bron
+     * qilganda ishlatiladi. Topilsa mijozni bog'lash uchun, topilmasa mehmon sifatida kiritiladi.
+     */
+    @GetMapping("/by-phone/{phone}")
+    public ResponseEntity<List<UserLookupDto>> byPhone(@PathVariable String phone) {
+        return ResponseEntity.ok(service.findByPhone(phone));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<AppUserDto> create(@Valid @RequestBody AppUserCreateRequest request) {
@@ -48,6 +58,13 @@ public class AppUserController {
     @PutMapping("/{id}")
     public ResponseEntity<AppUserDto> update(@PathVariable UUID id, @Valid @RequestBody AppUserUpdateRequest request) {
         return ResponseEntity.ok(service.update(id, request));
+    }
+
+    /** Joriy (tizimga kirgan) foydalanuvchi o'z parolini o'zgartiradi. */
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        service.changePassword(request);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

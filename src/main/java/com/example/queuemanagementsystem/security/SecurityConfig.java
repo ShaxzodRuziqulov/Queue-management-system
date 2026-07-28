@@ -50,6 +50,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-login/**")
                             .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
+                        // ── Mijozni qo'lda bron qilishda telefon bo'yicha qidirish ──
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users/by-phone/**")
+                            .hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
+
                         // ── Ommaviy ko'rish: mijoz tizimga kirmasdan ham bizneslar/xizmatlarni
                         //    ko'ra oladi — faqat bron qilishda tizimga kirish talab qilinadi ──
                         .requestMatchers(HttpMethod.GET, "/api/v1/businesses", "/api/v1/businesses/*").permitAll()

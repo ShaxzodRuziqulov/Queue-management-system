@@ -2,10 +2,7 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Role;
-import com.example.queuemanagementsystem.dto.AppUserCreateRequest;
-import com.example.queuemanagementsystem.dto.AppUserDto;
-import com.example.queuemanagementsystem.dto.AppUserUpdateRequest;
-import com.example.queuemanagementsystem.dto.UserLookupDto;
+import com.example.queuemanagementsystem.dto.*;
 import com.example.queuemanagementsystem.dto.auth.RegisterRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.AppUserMapper;
@@ -75,7 +72,9 @@ public class AppUserService {
         return toDtoWithOwner(repository.save(entity));
     }
 
-    /** Login normallashtiradi, uzunlik va band-emasligini tekshiradi, tayyor loginni qaytaradi. */
+    /**
+     * Login normallashtiradi, uzunlik va band-emasligini tekshiradi, tayyor loginni qaytaradi.
+     */
     private String validateNewLogin(String login) {
         String username = normalizeLogin(login);
         if (username.length() < 3) {
@@ -212,6 +211,33 @@ public class AppUserService {
                 .build();
     }
 
+    /**
+     * Telefon raqami bo'yicha ro'yxatdan o'tgan foydalanuvchi(lar)ni qidiradi — xodim
+     * mijozni qo'lda bron qilganda "bu mijoz tizimda bormi?" ni aniqlash uchun.
+     * Topilmasa bo'sh ro'yxat qaytaradi (bu normal holat — mijoz mehmon sifatida kiritiladi).
+     */
+    @Transactional(readOnly = true)
+    public List<UserLookupDto> findByPhone(String phone) {
+        String suffix = normalizePhoneSuffix(phone);
+        if (suffix.length() < 7) {
+            throw new IllegalArgumentException("Telefon raqami to'liq emas");
+        }
+        return repository.findByPhoneEndingWith(suffix).stream()
+                .map(user -> UserLookupDto.builder()
+                        .id(user.getId())
+                        .login(user.getUsername())
+                        .displayName(user.getDisplayName())
+                        .phone(user.getPhone())
+                        .build())
+                .toList();
+    }
+
+    /** Telefonni faqat raqamlarga keltirib, oxirgi 9 xonasini qaytaradi (998 mamlakat kodini tashlaydi). */
+    private static String normalizePhoneSuffix(String phone) {
+        String digits = phone == null ? "" : phone.replaceAll("\\D", "");
+        return digits.length() > 9 ? digits.substring(digits.length() - 9) : digits;
+    }
+
     private void requireSelfOrAdmin(UUID targetId) {
         if (currentUserService.isAdmin()) return;
         UUID currentId = currentUserService.getCurrentUserId();
@@ -228,5 +254,13 @@ public class AppUserService {
 
     private static String normalizeLogin(String login) {
         return login == null ? "" : login.trim().toLowerCase();
+    }
+
+    public void changePassword(ChangePasswordRequest request) {
+        AppUser user = requireUser(currentUserService.getCurrentUserId());
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Joriy parol noto'g'ri");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
     }
 }

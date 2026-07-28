@@ -34,8 +34,7 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter)
-            throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -52,11 +51,11 @@ public class SecurityConfig {
 
                         // ── Xodimni hisobga bog'lash uchun login qidiruvi ────────
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-login/**")
-                            .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Mijozni qo'lda bron qilishda telefon bo'yicha qidirish ──
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-phone/**")
-                            .hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Ommaviy ko'rish: mijoz tizimga kirmasdan ham bizneslar/xizmatlarni
                         //    ko'ra oladi — faqat bron qilishda tizimga kirish talab qilinadi ──
@@ -68,38 +67,38 @@ public class SecurityConfig {
 
                         // ── ADMIN only ───────────────────────────────────────────
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET,    "/api/v1/users").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/status").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/review").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/review").hasRole("ADMIN")
 
                         // ── Business CRUD (owner creates/edits/deletes own business) ──
                         // ROLE_USER ham biznes yarata olishi kerak (birinchi marta, onboarding)
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses").hasAnyRole("USER", "BUSINESS_OWNER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses").hasAnyRole("USER", "BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
 
                         // ── Staff portal (o'z profili) ───────────────────────────
                         .requestMatchers("/api/v1/staff/me/**").hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Staff management ─────────────────────────────────────
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/staff/*/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET,    "/api/v1/businesses/*/staff/*/account").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/staff/*/account").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/staff/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/staff/*/register").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/staff/*/account").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/staff/*/account").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/staff/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Offered services management ──────────────────────────
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/services").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/services/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/services").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/services/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/services/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Business hours management ────────────────────────────
-                        .requestMatchers(HttpMethod.POST,   "/api/v1/businesses/*/hours").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/hours").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
                         // ── Everything else: any authenticated user ──────────────
@@ -150,7 +149,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
         return configuration.getAuthenticationManager();
     }
 }

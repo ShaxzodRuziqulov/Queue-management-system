@@ -90,13 +90,17 @@ public class Business extends BaseEntity{
     @Column(name = "reviewed_at")
     private Instant reviewedAt;
 
-    /** Obuna yoki sinov davri hozir faolmi? */
+    /** Obuna yoki sinov davri hozir faolmi? (yozuv amallariga ruxsat shu bilan boshqariladi) */
     public boolean isAccessAllowed() {
         Instant now = Instant.now();
-        if (status == BusinessStatus.ACTIVE) return true;
-        if (status == BusinessStatus.TRIAL && trialEndDate != null && now.isBefore(trialEndDate)) return true;
-        if (subscriptionEndDate != null && now.isBefore(subscriptionEndDate)) return true;
-        return false;
+        return switch (status) {
+            // ACTIVE: obuna muddati bo'lsa tekshiriladi; NULL bo'lsa cheksiz faol.
+            case ACTIVE -> subscriptionEndDate == null || now.isBefore(subscriptionEndDate);
+            // TRIAL: sinov muddati o'tmagan bo'lsa faol.
+            case TRIAL -> trialEndDate != null && now.isBefore(trialEndDate);
+            // DRAFT, PENDING_REVIEW, EXPIRED, SUSPENDED — yozuvga ruxsat yo'q.
+            default -> false;
+        };
     }
 
     @OneToMany(mappedBy = "business")

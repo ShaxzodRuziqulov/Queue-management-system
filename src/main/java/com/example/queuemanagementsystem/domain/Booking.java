@@ -59,6 +59,16 @@ public class Booking extends BaseEntity{
     @JoinColumn(name = "staff_id")
     private StaffMember staff;
 
+    /**
+     * Biznesning mijozlar bazasidagi yozuv. Bron yaratilganda {@link #guestPhone}
+     * bo'yicha avtomatik topiladi yoki yaratiladi (telefon bo'lmasa — null).
+     * Yuqoridagi {@link #customer} dan farqli — bu biznesga tegishli mijoz profili,
+     * {@link #customer} esa kelajakdagi mijoz ilovasining tizim hisobi.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_customer_id")
+    private Customer client;
+
     @Column(nullable = false)
     private Instant startAt;
 

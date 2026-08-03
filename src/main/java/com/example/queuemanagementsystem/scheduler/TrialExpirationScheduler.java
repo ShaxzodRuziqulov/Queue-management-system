@@ -29,13 +29,23 @@ public class TrialExpirationScheduler {
     @Transactional
     public void expireTrials() {
         Instant now = Instant.now();
-        int count = businessRepository.expireTrials(
+
+        int trialCount = businessRepository.expireTrials(
                 BusinessStatus.TRIAL,
                 BusinessStatus.EXPIRED,
                 now
         );
-        if (count > 0) {
-            log.info("Trial muddati tugadi: {} ta biznes EXPIRED holatiga o'tkazildi.", count);
+        if (trialCount > 0) {
+            log.info("Trial muddati tugadi: {} ta biznes EXPIRED holatiga o'tkazildi.", trialCount);
+        }
+
+        int subscriptionCount = businessRepository.expireLapsedSubscriptions(
+                BusinessStatus.ACTIVE,
+                BusinessStatus.EXPIRED,
+                now
+        );
+        if (subscriptionCount > 0) {
+            log.info("Obuna muddati tugadi: {} ta biznes EXPIRED holatiga o'tkazildi.", subscriptionCount);
         }
     }
 }

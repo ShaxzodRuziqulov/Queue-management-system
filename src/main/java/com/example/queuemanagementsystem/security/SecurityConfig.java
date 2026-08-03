@@ -101,6 +101,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*/hours/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
 
+                        // ── Mijozlar bazasi (biznes jamoasi) ─────────────────────
+                        .requestMatchers("/api/v1/businesses/*/customers/**")
+                        .hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
+
                         // ── Everything else: any authenticated user ──────────────
                         .anyRequest().authenticated())
                 .httpBasic(AbstractHttpConfigurer::disable)

@@ -25,6 +25,7 @@ public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "customer", ignore = true)
+    @Mapping(target = "client", ignore = true)
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "offeredService", ignore = true)
     @Mapping(target = "staff", ignore = true)
@@ -35,6 +36,7 @@ public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "customer", ignore = true)
+    @Mapping(target = "client", ignore = true)
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "offeredService", ignore = true)
     @Mapping(target = "staff", ignore = true)

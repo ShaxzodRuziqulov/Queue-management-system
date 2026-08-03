@@ -14,6 +14,7 @@ import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.BookingMapper;
 import com.example.queuemanagementsystem.repository.BookingRepository;
 import com.example.queuemanagementsystem.repository.BusinessHoursRepository;
+import com.example.queuemanagementsystem.repository.ReviewRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -67,7 +68,9 @@ public class BookingService {
     private final OfferedServiceService offeredServiceService;
     private final StaffMemberService staffMemberService;
     private final BusinessHoursRepository businessHoursRepository;
+    private final ReviewRepository reviewRepository;
     private final CurrentUserService currentUserService;
+    private final CustomerService customerService;
 
     @Transactional(readOnly = true)
     public Page<BookingDto> findAll(UUID customerId, UUID businessId, LocalDate date, Pageable pageable) {
@@ -143,11 +146,21 @@ public class BookingService {
         if (staff != null) {
             checkNoOverlap(staff.getId(), request.getStartAt(), request.getEndAt(), null);
         }
+        // Mijozlar bazasini avtomatik to'ldirish: telefonli mehmon bronlar biznesning
+        // mijoz profiliga yig'iladi (topiladi yoki yaratiladi, tashrif soni oshadi).
+        if (StringUtils.hasText(request.getGuestPhone())) {
+            entity.setClient(customerService.upsertFromBooking(
+                    business, request.getGuestName(), request.getGuestPhone()));
+        }
         return mapper.toDto(repository.save(entity));
     }
 
     public BookingDto update(UUID id, BookingUpdateRequest request) {
         Booking entity = requireBooking(id);
+        // Read-only rejim: muddati tugagan biznesda bronni o'zgartirib bo'lmaydi (admin — istisno).
+        if (!currentUserService.isAdmin()) {
+            businessService.requireActiveAccess(entity.getBusiness().getId());
+        }
         requireWriteAccess(entity, request.getStatus());
         mapper.update(entity, request);
         if (request.getStaffId() != null) {
@@ -167,7 +180,14 @@ public class BookingService {
 
     public void delete(UUID id) {
         Booking entity = requireBooking(id);
+        // Read-only rejim: muddati tugagan biznesda bronni o'chirib bo'lmaydi (admin — istisno).
+        if (!currentUserService.isAdmin()) {
+            businessService.requireActiveAccess(entity.getBusiness().getId());
+        }
         requireWriteAccess(entity, null);
+        if (reviewRepository.existsByBooking_Id(id)) {
+            throw new IllegalStateException("Bu bronga sharh bog'langan. Avval sharhni o'chiring");
+        }
         repository.deleteById(id);
     }
 

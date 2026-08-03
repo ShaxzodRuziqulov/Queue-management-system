@@ -23,4 +23,13 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
     @Modifying
     @Query("UPDATE Business b SET b.status = :expiredStatus WHERE b.status = :trialStatus AND b.trialEndDate < :now")
     int expireTrials(BusinessStatus trialStatus, BusinessStatus expiredStatus, Instant now);
+
+    /**
+     * Obuna muddati tugagan ACTIVE bizneslarni birdaniga EXPIRED qilib yangilaydi (bulk update).
+     * subscriptionEndDate = NULL bo'lganlar (cheksiz faol) tegilmaydi.
+     */
+    @Modifying
+    @Query("UPDATE Business b SET b.status = :expiredStatus " +
+            "WHERE b.status = :activeStatus AND b.subscriptionEndDate IS NOT NULL AND b.subscriptionEndDate < :now")
+    int expireLapsedSubscriptions(BusinessStatus activeStatus, BusinessStatus expiredStatus, Instant now);
 }

@@ -4,6 +4,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 @Data
 public class StaffRegisterRequest {
 
@@ -24,4 +28,13 @@ public class StaffRegisterRequest {
 
     @Size(max = 32)
     private String phone;
+
+    @Size(max = 1024)
+    private String avatarUrl;
+
+    private String bio;
+
+    private Integer experienceYears;
+
+    private Set<UUID> serviceIds = new HashSet<>();
 }

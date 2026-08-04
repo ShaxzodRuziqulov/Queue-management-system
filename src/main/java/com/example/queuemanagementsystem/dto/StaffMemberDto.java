@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -16,4 +17,10 @@ public class StaffMemberDto {
     private boolean active;
     private Instant createdAt;
     private Instant updatedAt;
+    private Set<UUID> serviceIds;
+    private Integer experienceYears;
+    private String bio;
+    private String avatarUrl;
+    private Double avgRating;
+    private Long reviewCount;
 }

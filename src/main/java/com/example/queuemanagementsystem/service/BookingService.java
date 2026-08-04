@@ -140,6 +140,7 @@ public class BookingService {
         StaffMember staff = null;
         if (request.getStaffId() != null) {
             staff = staffMemberService.requireStaff(request.getBusinessId(), request.getStaffId());
+            validateStaffCanPerformService(request.getBusinessId(), staff.getId(), offeredService.getId());
             entity.setStaff(staff);
         }
         checkBusinessHours(business.getId(), request.getStartAt(), request.getEndAt());
@@ -164,7 +165,9 @@ public class BookingService {
         requireWriteAccess(entity, request.getStatus());
         mapper.update(entity, request);
         if (request.getStaffId() != null) {
-            entity.setStaff(staffMemberService.requireStaff(entity.getBusiness().getId(), request.getStaffId()));
+            StaffMember staff = staffMemberService.requireStaff(entity.getBusiness().getId(), request.getStaffId());
+            validateStaffCanPerformService(entity.getBusiness().getId(), staff.getId(), entity.getOfferedService().getId());
+            entity.setStaff(staff);
         }
         if (!entity.getEndAt().isAfter(entity.getStartAt())) {
             throw new IllegalArgumentException("Tugash vaqti boshlanishdan keyin bo'lishi kerak");
@@ -244,6 +247,12 @@ public class BookingService {
         boolean overlaps = repository.existsOverlapping(staffId, startAt, endAt, excludeBookingId, NON_BLOCKING_STATUSES);
         if (overlaps) {
             throw new IllegalArgumentException("Bu xodim uchun tanlangan vaqtda boshqa bron allaqachon mavjud");
+        }
+    }
+
+    private void validateStaffCanPerformService(UUID businessId, UUID staffId, UUID serviceId) {
+        if (!staffMemberService.canPerformService(businessId, staffId, serviceId)) {
+            throw new IllegalArgumentException("Bu xodim tanlangan xizmatni bajara olmaydi");
         }
     }
 

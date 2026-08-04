@@ -1,12 +1,6 @@
 package com.example.queuemanagementsystem.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,6 +20,15 @@ public class StaffMember extends BaseEntity {
     @Column(nullable = false, length = 200)
     private String displayName;
 
+    @Column(name = "avatar_url", length = 1024)
+    private String avatarUrl;
+
+    @Column(columnDefinition = "text")
+    private String bio;
+
+    @Column(name = "experience_years")
+    private Integer experienceYears;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "linked_user_id")
     private AppUser linkedUser;
@@ -35,4 +38,12 @@ public class StaffMember extends BaseEntity {
 
     @OneToMany(mappedBy = "staff")
     private Set<Booking> bookings = new HashSet<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "staff_member_services",
+            joinColumns = @JoinColumn(name = "staff_id"),
+            inverseJoinColumns = @JoinColumn(name = "service_id")
+    )
+    private Set<OfferedService> offeredServices = new HashSet<>();
 }

@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Business;
+import com.example.queuemanagementsystem.domain.OfferedService;
 import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.domain.enums.BookingStatus;
 import com.example.queuemanagementsystem.dto.BookingDto;
@@ -16,6 +17,7 @@ import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.BookingMapper;
 import com.example.queuemanagementsystem.mapper.StaffMemberMapper;
 import com.example.queuemanagementsystem.repository.BookingRepository;
+import com.example.queuemanagementsystem.repository.OfferedServiceRepository;
 import com.example.queuemanagementsystem.repository.ReviewRepository;
 import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.repository.StaffMemberRepository;
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 
 @Service
@@ -41,23 +45,33 @@ public class StaffMemberService {
     private final RoleRepository roleRepository;
     private final BookingRepository bookingRepository;
     private final ReviewRepository reviewRepository;
+    private final OfferedServiceRepository offeredServiceRepository;
 
     @Transactional(readOnly = true)
     public List<StaffMemberDto> findAll(UUID businessId) {
         businessService.requireBusiness(businessId);
-        return repository.findByBusiness_Id(businessId).stream().map(mapper::toDto).toList();
+        return repository.findByBusiness_Id(businessId).stream().map(this::toDtoWithStats).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<StaffMemberDto> findByService(UUID businessId, UUID serviceId) {
+        businessService.requireBusiness(businessId);
+        return repository.findActiveByBusinessIdAndServiceId(businessId, serviceId)
+                .stream()
+                .map(this::toDtoWithStats)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public StaffMemberDto get(UUID businessId, UUID staffId) {
-        return mapper.toDto(requireStaff(businessId, staffId));
+        return toDtoWithStats(requireStaff(businessId, staffId));
     }
 
     /** Joriy foydalanuvchining xodim profilini qaytaradi */
     @Transactional(readOnly = true)
     public StaffMemberDto getMyProfile() {
         UUID userId = currentUserService.getCurrentUserId();
-        return mapper.toDto(requireStaffByUserId(userId));
+        return toDtoWithStats(requireStaffByUserId(userId));
     }
 
     /** Joriy xodimga biriktirilgan bronlarni qaytaradi */
@@ -99,13 +113,14 @@ public class StaffMemberService {
         businessService.requireOwnerOrAdmin(businessId);
         StaffMember entity = mapper.toEntity(request);
         entity.setBusiness(businessService.requireActiveAccess(businessId));
+        applyServices(entity, businessId, request.getServiceIds());
         if (request.getLinkedUserId() != null) {
             requireNotAlreadyStaff(businessId, request.getLinkedUserId());
             AppUser user = userService.requireUser(request.getLinkedUserId());
             entity.setLinkedUser(user);
             grantStaffRole(user);
         }
-        return mapper.toDto(repository.save(entity));
+        return toDtoWithStats(repository.save(entity));
     }
 
     /**
@@ -124,9 +139,13 @@ public class StaffMemberService {
         StaffMember entity = new StaffMember();
         entity.setBusiness(business);
         entity.setDisplayName(request.getDisplayName());
+        entity.setAvatarUrl(request.getAvatarUrl());
+        entity.setBio(request.getBio());
+        entity.setExperienceYears(request.getExperienceYears());
         entity.setLinkedUser(newUser);
         entity.setActive(true);
-        return mapper.toDto(repository.save(entity));
+        applyServices(entity, businessId, request.getServiceIds());
+        return toDtoWithStats(repository.save(entity));
     }
 
     /**
@@ -144,7 +163,14 @@ public class StaffMemberService {
                 request.getEmail(), request.getPhone());
         grantStaffRole(newUser);
         entity.setLinkedUser(newUser);
-        return mapper.toDto(entity);
+        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
+            entity.setDisplayName(request.getDisplayName().trim());
+        }
+        entity.setAvatarUrl(request.getAvatarUrl());
+        entity.setBio(request.getBio());
+        entity.setExperienceYears(request.getExperienceYears());
+        applyServices(entity, businessId, request.getServiceIds());
+        return toDtoWithStats(entity);
     }
 
     /**
@@ -185,7 +211,7 @@ public class StaffMemberService {
         if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
             entity.setDisplayName(request.getDisplayName().trim());
         }
-        return mapper.toDto(entity);
+        return toDtoWithStats(entity);
     }
 
     public StaffMemberDto update(UUID businessId, UUID staffId, StaffMemberUpdateRequest request) {
@@ -202,13 +228,16 @@ public class StaffMemberService {
         }
 
         mapper.update(entity, request);
+        if (request.getServiceIds() != null) {
+            applyServices(entity, businessId, request.getServiceIds());
+        }
 
         if (isNewLink) {
             AppUser newUser = userService.requireUser(request.getLinkedUserId());
             entity.setLinkedUser(newUser);
             grantStaffRole(newUser);
         }
-        return mapper.toDto(entity);
+        return toDtoWithStats(entity);
     }
 
     /** Bu foydalanuvchi shu biznesda allaqachon boshqa xodim yozuviga bog'langan bo'lsa, xatolik qaytaradi. */
@@ -247,6 +276,11 @@ public class StaffMemberService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public boolean canPerformService(UUID businessId, UUID staffId, UUID serviceId) {
+        return repository.existsByBusiness_IdAndIdAndOfferedServices_Id(businessId, staffId, serviceId);
+    }
+
     StaffMember requireStaff(UUID businessId, UUID staffId) {
         return repository.findByBusiness_IdAndId(businessId, staffId)
                 .orElseThrow(() -> new ResourceNotFoundException("Xodim topilmadi: " + staffId));
@@ -263,5 +297,25 @@ public class StaffMemberService {
 
     private void revokeStaffRole(AppUser user) {
         roleRepository.removeRoleIfPresent(user, "ROLE_STAFF");
+    }
+
+    private void applyServices(StaffMember entity, UUID businessId, Set<UUID> serviceIds) {
+        if (serviceIds == null || serviceIds.isEmpty()) {
+            entity.getOfferedServices().clear();
+            return;
+        }
+        List<OfferedService> services = offeredServiceRepository.findByBusiness_IdAndIdIn(businessId, serviceIds);
+        if (services.size() != serviceIds.size()) {
+            throw new ResourceNotFoundException("Xodimga biriktiriladigan xizmatlardan biri topilmadi");
+        }
+        entity.setOfferedServices(new HashSet<>(services));
+    }
+
+    private StaffMemberDto toDtoWithStats(StaffMember entity) {
+        StaffMemberDto dto = mapper.toDto(entity);
+        UUID staffId = entity.getId();
+        dto.setAvgRating(reviewRepository.avgStarsByStaffId(staffId));
+        dto.setReviewCount(reviewRepository.countByStaff_Id(staffId));
+        return dto;
     }
 }

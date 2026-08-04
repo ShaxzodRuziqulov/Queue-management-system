@@ -1,10 +1,6 @@
 package com.example.queuemanagementsystem.web.api;
 
-import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
-import com.example.queuemanagementsystem.dto.BusinessDto;
-import com.example.queuemanagementsystem.dto.BusinessReviewRequest;
-import com.example.queuemanagementsystem.dto.BusinessStatusRequest;
-import com.example.queuemanagementsystem.dto.BusinessUpdateRequest;
+import com.example.queuemanagementsystem.dto.*;
 import com.example.queuemanagementsystem.service.BusinessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +53,9 @@ public class BusinessController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Admin only: biznes statusini o'zgartirish (ACTIVE, SUSPENDED, va h.k.) */
+    /**
+     * Admin only: biznes statusini o'zgartirish (ACTIVE, SUSPENDED, va h.k.)
+     */
     @PutMapping("/{id}/status")
     public ResponseEntity<BusinessDto> changeStatus(
             @PathVariable UUID id,
@@ -65,7 +63,9 @@ public class BusinessController {
         return ResponseEntity.ok(service.changeStatus(id, request));
     }
 
-    /** Admin only: PENDING_REVIEW biznesni tasdiqlash yoki rad etish */
+    /**
+     * Admin only: PENDING_REVIEW biznesni tasdiqlash yoki rad etish
+     */
     @PostMapping("/{id}/review")
     public ResponseEntity<BusinessDto> review(
             @PathVariable UUID id,

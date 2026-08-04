@@ -17,6 +17,8 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     List<Review> findByStaff_Id(UUID staffId);
 
+    long countByStaff_Id(UUID staffId);
+
     /** Xodimning o'rtacha reytingi */
     @org.springframework.data.jpa.repository.Query(
         "SELECT COALESCE(AVG(r.stars), 0) FROM Review r WHERE r.staff.id = :staffId")

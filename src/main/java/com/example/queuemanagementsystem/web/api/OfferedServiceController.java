@@ -2,8 +2,10 @@ package com.example.queuemanagementsystem.web.api;
 
 import com.example.queuemanagementsystem.dto.OfferedServiceCreateRequest;
 import com.example.queuemanagementsystem.dto.OfferedServiceDto;
+import com.example.queuemanagementsystem.dto.StaffMemberDto;
 import com.example.queuemanagementsystem.dto.OfferedServiceUpdateRequest;
 import com.example.queuemanagementsystem.service.OfferedServiceService;
+import com.example.queuemanagementsystem.service.StaffMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class OfferedServiceController {
 
     private final OfferedServiceService service;
+    private final StaffMemberService staffMemberService;
 
     @GetMapping
     public ResponseEntity<List<OfferedServiceDto>> list(@PathVariable UUID businessId) {
@@ -30,6 +33,14 @@ public class OfferedServiceController {
     @GetMapping("/{serviceId}")
     public ResponseEntity<OfferedServiceDto> get(@PathVariable UUID businessId, @PathVariable UUID serviceId) {
         return ResponseEntity.ok(service.get(businessId, serviceId));
+    }
+
+    @GetMapping("/{serviceId}/staff")
+    public ResponseEntity<List<StaffMemberDto>> listStaffForService(
+            @PathVariable UUID businessId,
+            @PathVariable UUID serviceId) {
+        service.get(businessId, serviceId);
+        return ResponseEntity.ok(staffMemberService.findByService(businessId, serviceId));
     }
 
     @PostMapping

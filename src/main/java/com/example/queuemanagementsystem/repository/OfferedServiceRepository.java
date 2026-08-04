@@ -11,5 +11,7 @@ public interface OfferedServiceRepository extends JpaRepository<OfferedService, 
 
     List<OfferedService> findByBusiness_Id(UUID businessId);
 
+    List<OfferedService> findByBusiness_IdAndIdIn(UUID businessId, Iterable<UUID> ids);
+
     Optional<OfferedService> findByBusiness_IdAndId(UUID businessId, UUID id);
 }

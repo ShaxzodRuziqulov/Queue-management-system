@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -42,7 +41,7 @@ public class JwtService {
         Map<String, Object> extraClaims = new HashMap<>();
         List<String> roles = userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+                .toList();
         extraClaims.put("roles", roles);
         extraClaims.put("token_type", "access");
         return generateToken(extraClaims, userDetails);
@@ -52,11 +51,6 @@ public class JwtService {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("token_type", "refresh");
         return buildToken(extraClaims, userDetails, refreshExpiration);
-    }
-
-    public List<String> extractRoles(String token) {
-        Claims claims = extractAllClaims(token);
-        return claims.get("roles", List.class);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

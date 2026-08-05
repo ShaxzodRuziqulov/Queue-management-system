@@ -14,13 +14,13 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface BookingMapper extends EntityMapper<BookingDto, Booking> {
 
     @Mapping(target = "customerId", source = "customer.id")
-    @Mapping(target = "customerName", source = "customer.displayName")
+    @Mapping(target = "customerName", source = "customer.fullName")
     @Mapping(target = "businessId", source = "business.id")
     @Mapping(target = "businessName", source = "business.name")
     @Mapping(target = "offeredServiceId", source = "offeredService.id")
     @Mapping(target = "offeredServiceName", source = "offeredService.name")
     @Mapping(target = "staffId", source = "staff.id")
-    @Mapping(target = "staffName", source = "staff.displayName")
+    @Mapping(target = "staffName", source = "staff.fullName")
     BookingDto toDto(Booking entity);
 
     @Mapping(target = "id", ignore = true)

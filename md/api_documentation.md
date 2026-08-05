@@ -135,7 +135,8 @@ Barcha auth so'rovlari token talab qilmaydi.
 {
   "login": "johndoe",
   "password": "strongpassword123",
-  "displayName": "John Doe",
+  "firstName": "John",
+  "lastName": "Doe",
   "email": "john@example.com",
   "phone": "+998901234567"
 }
@@ -180,7 +181,8 @@ Barcha auth so'rovlari token talab qilmaydi.
 {
   "login": "testuser",
   "password": "password12",
-  "displayName": "Test User",
+  "firstName": "Test",
+  "lastName": "User",
   "email": "user@example.com",
   "phone": "+998901112233",
   "avatarUrl": null,
@@ -196,7 +198,8 @@ Barcha auth so'rovlari token talab qilmaydi.
 // Request (barcha maydonlar ixtiyoriy)
 {
   "password": "newpassword12",
-  "displayName": "Yangilangan Ism",
+  "firstName": "Yangilangan",
+  "lastName": "Ism",
   "email": "new@example.com",
   "phone": "+998909876543",
   "avatarUrl": "https://example.com/avatar.png",
@@ -464,7 +467,8 @@ Yo'l: `/businesses/{businessId}/staff`
 ```json
 // Request
 {
-  "displayName": "Ali Valiyev",
+  "firstName": "Ali",
+  "lastName": "Valiyev",
   "linkedUserId": null,
   "active": true
 }
@@ -479,7 +483,8 @@ Yo'l: `/businesses/{businessId}/staff`
 ```json
 // Request (barcha maydonlar ixtiyoriy)
 {
-  "displayName": "Ali Valiyev (Usta)",
+  "firstName": "Ali",
+  "lastName": "Valiyev",
   "linkedUserId": null,
   "active": true
 }

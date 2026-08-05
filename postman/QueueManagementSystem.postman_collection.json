@@ -109,7 +109,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"login\": \"newuser\",\n  \"password\": \"password12\",\n  \"displayName\": \"Yangi Foydalanuvchi\",\n  \"email\": \"new@example.com\",\n  \"phone\": \"+998901112233\"\n}"
+              "raw": "{\n  \"login\": \"newuser\",\n  \"password\": \"password12\",\n  \"firstName\": \"Yangi\",\n  \"lastName\": \"Foydalanuvchi\",\n  \"email\": \"new@example.com\",\n  \"phone\": \"+998901112233\"\n}"
             },
             "url": "{{baseUrl}}/api/v1/auth/register"
           }
@@ -158,7 +158,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"login\": \"testuser\",\n  \"password\": \"password12\",\n  \"displayName\": \"Test User\",\n  \"email\": \"testuser@example.com\",\n  \"phone\": \"+998901112233\",\n  \"avatarUrl\": null,\n  \"active\": true\n}"
+              "raw": "{\n  \"login\": \"testuser\",\n  \"password\": \"password12\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"testuser@example.com\",\n  \"phone\": \"+998901112233\",\n  \"avatarUrl\": null,\n  \"active\": true\n}"
             },
             "url": "{{baseUrl}}/api/v1/users"
           }
@@ -170,7 +170,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Updated User\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+998909876543\",\n  \"avatarUrl\": null,\n  \"active\": true,\n  \"roles\": [\"ROLE_BUSINESS_OWNER\"]\n}",
+              "raw": "{\n  \"firstName\": \"Updated\",\n  \"lastName\": \"User\",\n  \"email\": \"updated@example.com\",\n  \"phone\": \"+998909876543\",\n  \"avatarUrl\": null,\n  \"active\": true,\n  \"roles\": [\"ROLE_BUSINESS_OWNER\"]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{baseUrl}}/api/v1/users/{{userId}}",
@@ -717,7 +717,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Ali Valiyev\",\n  \"linkedUserId\": null,\n  \"active\": true\n}"
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Valiyev\",\n  \"linkedUserId\": null,\n  \"active\": true\n}"
             },
             "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/staff"
           }
@@ -729,7 +729,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Ali Valiyev (Usta)\",\n  \"linkedUserId\": null,\n  \"active\": true\n}"
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Valiyev\",\n  \"linkedUserId\": null,\n  \"active\": true\n}"
             },
             "url": "{{baseUrl}}/api/v1/businesses/{{businessId}}/staff/{{staffId}}"
           }

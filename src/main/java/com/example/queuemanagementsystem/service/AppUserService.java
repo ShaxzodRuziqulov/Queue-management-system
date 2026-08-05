@@ -9,6 +9,7 @@ import com.example.queuemanagementsystem.mapper.AppUserMapper;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
 import com.example.queuemanagementsystem.repository.RoleRepository;
+import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,8 +53,8 @@ public class AppUserService {
     public void register(RegisterRequest request) {
         AppUser entity = new AppUser();
         entity.setUsername(validateNewLogin(request.getLogin()));
-        entity.setDisplayName(request.getDisplayName().trim());
-        applyNameSplit(entity, null, null);
+        entity.setFirstName(request.getFirstName().trim());
+        entity.setLastName(StringUtils.hasText(request.getLastName()) ? request.getLastName().trim() : null);
         entity.setEmail(StringUtils.hasText(request.getEmail()) ? request.getEmail().trim() : null);
         entity.setPhone(StringUtils.hasText(request.getPhone()) ? request.getPhone().trim() : null);
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -66,7 +67,6 @@ public class AppUserService {
         String username = validateNewLogin(request.getLogin());
         AppUser entity = mapper.toEntity(request);
         entity.setUsername(username);
-        applyNameSplit(entity, request.getFirstName(), request.getLastName());
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         roleRepository.assignRoleIfPresent(entity, "ROLE_USER");
         return toDtoWithOwner(repository.save(entity));
@@ -76,7 +76,7 @@ public class AppUserService {
      * Login normallashtiradi, uzunlik va band-emasligini tekshiradi, tayyor loginni qaytaradi.
      */
     private String validateNewLogin(String login) {
-        String username = normalizeLogin(login);
+        String username = AppUserDetailsService.normalizeLogin(login);
         if (username.length() < 3) {
             throw new IllegalArgumentException("Login kamida 3 belgidan iborat bo'lishi kerak");
         }
@@ -84,20 +84,6 @@ public class AppUserService {
             throw new IllegalArgumentException("Bu login allaqachon band");
         }
         return username;
-    }
-
-    /**
-     * firstName/lastName aniq berilmagan bo'lsa, displayName'dan avtomatik ajratib to'ldiradi
-     * — har bir foydalanuvchi yozuvida bu ikki ustun bo'sh qolmasligi uchun.
-     */
-    private void applyNameSplit(AppUser entity, String explicitFirstName, String explicitLastName) {
-        if (StringUtils.hasText(explicitFirstName) || StringUtils.hasText(explicitLastName)) {
-            return;
-        }
-        String source = StringUtils.hasText(entity.getDisplayName()) ? entity.getDisplayName() : entity.getUsername();
-        String[] parts = source.trim().split("\\s+", 2);
-        entity.setFirstName(parts[0]);
-        entity.setLastName(parts.length > 1 ? parts[1] : null);
     }
 
     public AppUserDto update(UUID id, AppUserUpdateRequest request) {
@@ -159,15 +145,15 @@ public class AppUserService {
      * Xodim uchun yangi foydalanuvchi hisobini yaratadi (biznes egasi tomonidan).
      * ROLE_STAFF alohida {@code StaffMemberService} tomonidan beriladi.
      */
-    public AppUser createAccountForStaff(String login, String password, String displayName, String email, String phone) {
+    public AppUser createAccountForStaff(String login, String password, String firstName, String lastName, String email, String phone) {
         String username = validateNewLogin(login);
         if (password == null || password.length() < 4) {
             throw new IllegalArgumentException("Parol kamida 4 belgidan iborat bo'lishi kerak");
         }
         AppUser entity = new AppUser();
         entity.setUsername(username);
-        entity.setDisplayName(StringUtils.hasText(displayName) ? displayName.trim() : username);
-        applyNameSplit(entity, null, null);
+        entity.setFirstName(firstName.trim());
+        entity.setLastName(StringUtils.hasText(lastName) ? lastName.trim() : null);
         entity.setEmail(StringUtils.hasText(email) ? email.trim() : null);
         entity.setPhone(StringUtils.hasText(phone) ? phone.trim() : null);
         entity.setPasswordHash(passwordEncoder.encode(password));
@@ -180,10 +166,14 @@ public class AppUserService {
      * Xodimga biriktirilgan hisobning asosiy ma'lumotlarini (ism, email, telefon, parol)
      * biznes egasi tomonidan yangilash uchun — faqat bo'sh bo'lmagan maydonlar qo'llanadi.
      */
-    public void updateStaffAccountFields(AppUser user, String displayName, String email, String phone, String password) {
-        if (StringUtils.hasText(displayName)) {
-            user.setDisplayName(displayName.trim());
-            applyNameSplit(user, null, null);
+    public void updateStaffAccountFields(AppUser user, String firstName, String lastName, String email, String phone, String password) {
+        if (firstName != null || lastName != null) {
+            if (StringUtils.hasText(firstName)) {
+                user.setFirstName(firstName.trim());
+            }
+            if (lastName != null) {
+                user.setLastName(StringUtils.hasText(lastName) ? lastName.trim() : null);
+            }
         }
         if (StringUtils.hasText(email)) user.setEmail(email.trim());
         if (StringUtils.hasText(phone)) user.setPhone(phone.trim());
@@ -198,16 +188,17 @@ public class AppUserService {
     /**
      * Login bo'yicha foydalanuvchini qisqacha (minimal) ma'lumot bilan qaytaradi.
      * Xodimni mavjud foydalanuvchi hisobiga bog'lash uchun ishlatiladi — shu sabab
-     * to'liq profil emas, faqat id/login/displayName qaytariladi.
+     * to'liq profil emas, faqat id/login/firstName/lastName qaytariladi.
      */
     @Transactional(readOnly = true)
     public UserLookupDto findByLogin(String login) {
-        AppUser user = repository.findByUsername(normalizeLogin(login))
+        AppUser user = repository.findByUsername(AppUserDetailsService.normalizeLogin(login))
                 .orElseThrow(() -> new ResourceNotFoundException("Bu login bilan foydalanuvchi topilmadi"));
         return UserLookupDto.builder()
                 .id(user.getId())
                 .login(user.getUsername())
-                .displayName(user.getDisplayName())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .build();
     }
 
@@ -226,7 +217,8 @@ public class AppUserService {
                 .map(user -> UserLookupDto.builder()
                         .id(user.getId())
                         .login(user.getUsername())
-                        .displayName(user.getDisplayName())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
                         .phone(user.getPhone())
                         .build())
                 .toList();
@@ -250,10 +242,6 @@ public class AppUserService {
         AppUserDto dto = mapper.toDto(entity);
         dto.setBusinessOwner(businessRepository.existsByOwner_Id(entity.getId()));
         return dto;
-    }
-
-    private static String normalizeLogin(String login) {
-        return login == null ? "" : login.trim().toLowerCase();
     }
 
     public void changePassword(ChangePasswordRequest request) {

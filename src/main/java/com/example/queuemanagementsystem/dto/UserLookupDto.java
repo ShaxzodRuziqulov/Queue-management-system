@@ -10,7 +10,8 @@ import java.util.UUID;
 public class UserLookupDto {
     private UUID id;
     private String login;
-    private String displayName;
+    private String firstName;
+    private String lastName;
     private String email;
     private String phone;
 }

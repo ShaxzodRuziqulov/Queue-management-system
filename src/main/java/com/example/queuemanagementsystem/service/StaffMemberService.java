@@ -132,13 +132,14 @@ public class StaffMemberService {
         businessService.requireOwnerOrAdmin(businessId);
         Business business = businessService.requireActiveAccess(businessId);
         AppUser newUser = userService.createAccountForStaff(
-                request.getLogin(), request.getPassword(), request.getDisplayName(),
+                request.getLogin(), request.getPassword(), request.getFirstName(), request.getLastName(),
                 request.getEmail(), request.getPhone());
         grantStaffRole(newUser);
 
         StaffMember entity = new StaffMember();
         entity.setBusiness(business);
-        entity.setDisplayName(request.getDisplayName());
+        entity.setFirstName(request.getFirstName().trim());
+        entity.setLastName(request.getLastName() == null || request.getLastName().isBlank() ? null : request.getLastName().trim());
         entity.setAvatarUrl(request.getAvatarUrl());
         entity.setBio(request.getBio());
         entity.setExperienceYears(request.getExperienceYears());
@@ -159,25 +160,18 @@ public class StaffMemberService {
             throw new IllegalStateException("Bu xodim allaqachon foydalanuvchi hisobiga bog'langan");
         }
         AppUser newUser = userService.createAccountForStaff(
-                request.getLogin(), request.getPassword(), request.getDisplayName(),
+                request.getLogin(), request.getPassword(), request.getFirstName(), request.getLastName(),
                 request.getEmail(), request.getPhone());
         grantStaffRole(newUser);
         entity.setLinkedUser(newUser);
-        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
-            entity.setDisplayName(request.getDisplayName().trim());
-        }
+        entity.setFirstName(request.getFirstName().trim());
+        entity.setLastName(request.getLastName() == null || request.getLastName().isBlank() ? null : request.getLastName().trim());
         entity.setAvatarUrl(request.getAvatarUrl());
         entity.setBio(request.getBio());
         entity.setExperienceYears(request.getExperienceYears());
         applyServices(entity, businessId, request.getServiceIds());
         return toDtoWithStats(entity);
     }
-
-    /**
-     * Xodimga biriktirilgan hisobning ism/email/telefon/parolini biznes egasi
-     * tomonidan yangilash — xodim hisobga bog'langan/ro'yxatdan o'tgandan keyin ham
-     * ma'lumotlarni to'g'rilash imkoni bo'lishi uchun.
-     */
     /**
      * Xodimga biriktirilgan hisobning joriy login/email/telefon ma'lumotlarini qaytaradi —
      * tahrirlash formasini oldindan to'ldirish uchun. Faqat shu biznes egasi/admin ko'ra oladi.
@@ -193,7 +187,8 @@ public class StaffMemberService {
         return UserLookupDto.builder()
                 .id(linkedUser.getId())
                 .login(linkedUser.getUsername())
-                .displayName(linkedUser.getDisplayName())
+                .firstName(linkedUser.getFirstName())
+                .lastName(linkedUser.getLastName())
                 .email(linkedUser.getEmail())
                 .phone(linkedUser.getPhone())
                 .build();
@@ -207,9 +202,14 @@ public class StaffMemberService {
             throw new IllegalStateException("Bu xodim hech qanday hisobga bog'lanmagan");
         }
         userService.updateStaffAccountFields(
-                linkedUser, request.getDisplayName(), request.getEmail(), request.getPhone(), request.getPassword());
-        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
-            entity.setDisplayName(request.getDisplayName().trim());
+                linkedUser, request.getFirstName(), request.getLastName(), request.getEmail(), request.getPhone(), request.getPassword());
+        if (request.getFirstName() != null || request.getLastName() != null) {
+            if (request.getFirstName() != null) {
+                entity.setFirstName(request.getFirstName().trim());
+            }
+            if (request.getLastName() != null) {
+                entity.setLastName(request.getLastName().isBlank() ? null : request.getLastName().trim());
+            }
         }
         return toDtoWithStats(entity);
     }
@@ -319,3 +319,4 @@ public class StaffMemberService {
         return dto;
     }
 }
+

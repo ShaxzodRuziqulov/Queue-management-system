@@ -5,16 +5,17 @@ import com.example.queuemanagementsystem.dto.AuditLogDto;
 import com.example.queuemanagementsystem.repository.AuditLogRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuditLogService {
 
     private final AuditLogRepository repository;
@@ -39,21 +40,29 @@ public class AuditLogService {
     public void log(String action, String entityType, String entityId, String details) {
         String adminLogin = currentUserService.getCurrentUsername();
         if (adminLogin == null) adminLogin = "system";
-        try {
-            repository.save(new AuditLog(adminLogin, action, entityType, entityId, details));
-        } catch (Exception e) {
-            log.error("Audit log yozishda xatolik: action={} entityId={}", action, entityId, e);
-        }
+        repository.saveAndFlush(new AuditLog(adminLogin, action, entityType, entityId, details));
     }
 
     @Transactional(readOnly = true)
     public Page<AuditLogDto> findAll(String entityType, String action, String adminLogin, Pageable pageable) {
-        return repository.findFiltered(
-                entityType,
-                action,
-                adminLogin,
-                pageable
-        ).map(this::toDto);
+        return repository.findAll(buildFilter(entityType, action, adminLogin), pageable).map(this::toDto);
+    }
+
+    private Specification<AuditLog> buildFilter(String entityType, String action, String adminLogin) {
+        return (root, query, cb) -> {
+            var predicate = cb.conjunction();
+            if (entityType != null && !entityType.isBlank()) {
+                predicate = cb.and(predicate, cb.equal(root.get("entityType"), entityType));
+            }
+            if (action != null && !action.isBlank()) {
+                predicate = cb.and(predicate, cb.equal(root.get("action"), action));
+            }
+            if (adminLogin != null && !adminLogin.isBlank()) {
+                String pattern = "%" + adminLogin.toLowerCase(Locale.ROOT) + "%";
+                predicate = cb.and(predicate, cb.like(cb.lower(root.get("adminLogin")), pattern));
+            }
+            return predicate;
+        };
     }
 
     private AuditLogDto toDto(AuditLog log) {

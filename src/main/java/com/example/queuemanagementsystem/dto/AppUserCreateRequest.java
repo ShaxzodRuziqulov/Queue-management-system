@@ -15,14 +15,12 @@ public class AppUserCreateRequest {
     @Size(min = 4, max = 128)
     private String password;
 
+    @NotBlank
     @Size(max = 120)
     private String firstName;
 
     @Size(max = 120)
     private String lastName;
-
-    @Size(max = 200)
-    private String displayName;
 
     @Size(max = 320)
     private String email;

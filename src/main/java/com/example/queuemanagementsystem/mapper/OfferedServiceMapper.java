@@ -14,7 +14,9 @@ public interface OfferedServiceMapper extends EntityMapper<OfferedServiceDto, Of
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
     @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "staffMembers", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     OfferedService toEntity(OfferedServiceCreateRequest request);
@@ -23,6 +25,7 @@ public interface OfferedServiceMapper extends EntityMapper<OfferedServiceDto, Of
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "staffMembers", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget OfferedService entity, OfferedServiceUpdateRequest request);

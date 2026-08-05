@@ -12,8 +12,11 @@ import java.util.UUID;
 public class StaffMemberCreateRequest {
 
     @NotBlank
-    @Size(max = 200)
-    private String displayName;
+    @Size(max = 120)
+    private String firstName;
+
+    @Size(max = 120)
+    private String lastName;
 
     @Size(max = 1024)
     private String avatarUrl;

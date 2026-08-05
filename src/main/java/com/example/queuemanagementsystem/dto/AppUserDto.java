@@ -14,7 +14,6 @@ public class AppUserDto {
     private String login;
     private String firstName;
     private String lastName;
-    private String displayName;
     private String email;
     private String phone;
     private String avatarUrl;

@@ -38,7 +38,6 @@ public class PreInject {
         if (userRepository.count() == 0) {
             AppUser admin = new AppUser();
             admin.setUsername("admin");
-            admin.setDisplayName("ADMIN");
             admin.setFirstName("first_name");
             admin.setLastName("last_name");
             admin.setPhone("123456789");
@@ -52,21 +51,17 @@ public class PreInject {
     }
 
     /**
-     * displayName bor-u, firstName/lastName bo'sh qolgan eski yozuvlarni to'ldiradi
-     * (masalan, /register orqali ilgari yaratilgan hisoblar). Har safar ishga
-     * tushirilganda xavfsiz — faqat ikkalasi ham bo'sh bo'lgan yozuvlarga tegadi.
+     * Eski yozuvlarda firstName bo'sh qolgan bo'lsa, username'dan to'ldiradi.
      */
     private void backfillMissingNames() {
         List<AppUser> missing = userRepository.findAll().stream()
-                .filter(u -> !StringUtils.hasText(u.getFirstName()) && !StringUtils.hasText(u.getLastName()))
+                .filter(u -> !StringUtils.hasText(u.getFirstName()))
                 .toList();
         if (missing.isEmpty()) return;
         for (AppUser u : missing) {
-            String source = StringUtils.hasText(u.getDisplayName()) ? u.getDisplayName() : u.getUsername();
-            String[] parts = source.trim().split("\\s+", 2);
-            u.setFirstName(parts[0]);
-            u.setLastName(parts.length > 1 ? parts[1] : null);
+            u.setFirstName(u.getUsername());
         }
         userRepository.saveAll(missing);
     }
 }
+

@@ -17,8 +17,11 @@ public class StaffMember extends BaseEntity {
     @JoinColumn(name = "business_id", nullable = false)
     private Business business;
 
-    @Column(nullable = false, length = 200)
-    private String displayName;
+    @Column(nullable = false, length = 120)
+    private String firstName;
+
+    @Column(length = 120)
+    private String lastName;
 
     @Column(name = "avatar_url", length = 1024)
     private String avatarUrl;
@@ -46,4 +49,11 @@ public class StaffMember extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "service_id")
     )
     private Set<OfferedService> offeredServices = new HashSet<>();
+
+    public String getFullName() {
+        String first = firstName == null ? "" : firstName.trim();
+        String last = lastName == null ? "" : lastName.trim();
+        String fullName = (first + " " + last).trim();
+        return fullName;
+    }
 }

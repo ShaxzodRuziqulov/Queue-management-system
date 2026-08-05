@@ -17,9 +17,6 @@ public class AppUserUpdateRequest {
     @Size(max = 120)
     private String lastName;
 
-    @Size(max = 200)
-    private String displayName;
-
     @Size(max = 320)
     private String email;
 

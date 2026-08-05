@@ -13,7 +13,7 @@ import java.util.Set;
 @Setter
 public class AppUser extends BaseEntity {
 
-    @Column(length = 120)
+    @Column(nullable = false, length = 120)
     private String firstName;
 
     @Column(length = 120)
@@ -24,9 +24,6 @@ public class AppUser extends BaseEntity {
 
     @Column(name = "password_hash", length = 120)
     private String passwordHash;
-
-    @Column(nullable = false, length = 200)
-    private String displayName;
 
     @Column(length = 320)
     private String email;
@@ -57,5 +54,12 @@ public class AppUser extends BaseEntity {
 
     @OneToMany(mappedBy = "customer")
     private Set<Booking> bookings = new HashSet<>();
+
+    public String getFullName() {
+        String first = firstName == null ? "" : firstName.trim();
+        String last = lastName == null ? "" : lastName.trim();
+        String fullName = (first + " " + last).trim();
+        return fullName.isEmpty() ? username : fullName;
+    }
 
 }

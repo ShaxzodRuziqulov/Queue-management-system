@@ -12,8 +12,11 @@ import java.util.UUID;
 public class StaffRegisterRequest {
 
     @NotBlank
-    @Size(max = 200)
-    private String displayName;
+    @Size(max = 120)
+    private String firstName;
+
+    @Size(max = 120)
+    private String lastName;
 
     @NotBlank
     @Size(min = 3, max = 64)

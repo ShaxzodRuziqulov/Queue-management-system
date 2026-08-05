@@ -81,6 +81,11 @@ public class BusinessService {
         }
         Business entity = requireBusiness(id);
         String oldStatus = entity.getStatus().name();
+        if (request.getStatus() == BusinessStatus.ACTIVE
+                && request.getSubscriptionEndDate() != null
+                && !request.getSubscriptionEndDate().isAfter(Instant.now())) {
+            throw new IllegalArgumentException("ACTIVE holati uchun obuna tugash sanasi kelajakda bo'lishi kerak yoki bo'sh qoldirilishi kerak");
+        }
         entity.setStatus(request.getStatus());
         entity.setSubscriptionEndDate(request.getSubscriptionEndDate());
         BusinessDto result = mapper.toDto(repository.save(entity));

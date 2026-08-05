@@ -14,7 +14,8 @@ public class LoginResponse {
     long expiresInSeconds;
     UUID userId;
     String login;
-    String displayName;
+    String firstName;
+    String lastName;
     String avatarUrl;
     boolean businessOwner;
     boolean admin;

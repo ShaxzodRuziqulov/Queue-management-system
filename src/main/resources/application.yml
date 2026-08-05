@@ -12,6 +12,8 @@ security:
     expiration-time: 86400000
     refresh-expiration-time: 604800000
 spring:
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.xml
   servlet:
     multipart:
       max-file-size: 5MB

@@ -18,11 +18,15 @@ public interface BusinessHoursMapper extends EntityMapper<BusinessHoursDto, Busi
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     BusinessHours toEntity(BusinessHoursCreateRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
     @Mapping(target = "weekday", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget BusinessHours entity, BusinessHoursUpdateRequest request);
 }

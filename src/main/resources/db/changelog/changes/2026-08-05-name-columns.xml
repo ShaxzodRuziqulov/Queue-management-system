@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-05-001-app-users-add-first-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <not>
+                    <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="app_users">
+            <column name="first_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-05-002-app-users-add-last-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <not>
+                    <columnExists schemaName="public" tableName="app_users" columnName="last_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="app_users">
+            <column name="last_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-05-003-app-users-backfill-from-display-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="display_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.app_users
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(display_name), ' ', 1), ''), username),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(trim(regexp_replace(trim(display_name), '^\S+\s*', '')), ''))
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-004-app-users-backfill-from-legacy-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="legacy_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.app_users
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(legacy_name), ' ', 1), ''), username),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(trim(regexp_replace(trim(legacy_name), '^\S+\s*', '')), ''))
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-005-app-users-backfill-fallback" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.app_users
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), username, 'User')
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-006-app-users-first-name-not-null" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+            </and>
+        </preConditions>
+        <addNotNullConstraint schemaName="public" tableName="app_users" columnName="first_name" columnDataType="varchar(120)"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-007-app-users-drop-display-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="display_name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="app_users" columnName="display_name"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-008-app-users-drop-legacy-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="legacy_name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="app_users" columnName="legacy_name"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-009-staff-members-add-first-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <not>
+                    <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="staff_members">
+            <column name="first_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-05-010-staff-members-add-last-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <not>
+                    <columnExists schemaName="public" tableName="staff_members" columnName="last_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="staff_members">
+            <column name="last_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-05-011-staff-members-backfill-from-display-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="display_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.staff_members
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(display_name), ' ', 1), ''), 'Xodim'),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(trim(regexp_replace(trim(display_name), '^\S+\s*', '')), ''))
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-012-staff-members-backfill-from-legacy-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="legacy_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.staff_members
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(legacy_name), ' ', 1), ''), 'Xodim'),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(trim(regexp_replace(trim(legacy_name), '^\S+\s*', '')), ''))
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-013-staff-members-backfill-from-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.staff_members
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(name), ' ', 1), ''), 'Xodim'),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(trim(regexp_replace(trim(name), '^\S+\s*', '')), ''))
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-014-staff-members-backfill-from-linked-user" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <tableExists schemaName="public" tableName="app_users"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="linked_user_id"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="app_users" columnName="last_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.staff_members staff
+            SET first_name = COALESCE(NULLIF(trim(staff.first_name), ''), users.first_name, 'Xodim'),
+                last_name = COALESCE(NULLIF(trim(staff.last_name), ''), users.last_name)
+            FROM public.app_users users
+            WHERE staff.linked_user_id = users.id
+              AND (staff.first_name IS NULL OR trim(staff.first_name) = '');
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-015-staff-members-backfill-fallback" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.staff_members
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), 'Xodim')
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-05-016-staff-members-first-name-not-null" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="first_name"/>
+            </and>
+        </preConditions>
+        <addNotNullConstraint schemaName="public" tableName="staff_members" columnName="first_name" columnDataType="varchar(120)"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-017-staff-members-drop-display-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="display_name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="staff_members" columnName="display_name"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-018-staff-members-drop-legacy-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="legacy_name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="staff_members" columnName="legacy_name"/>
+    </changeSet>
+
+    <changeSet id="2026-08-05-019-staff-members-drop-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="staff_members"/>
+                <columnExists schemaName="public" tableName="staff_members" columnName="name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="staff_members" columnName="name"/>
+    </changeSet>
+</databaseChangeLog>

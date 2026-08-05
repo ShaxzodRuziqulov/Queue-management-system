@@ -12,7 +12,8 @@ import java.util.UUID;
 public class StaffMemberDto {
     private UUID id;
     private UUID businessId;
-    private String displayName;
+    private String firstName;
+    private String lastName;
     private UUID linkedUserId;
     private boolean active;
     private Instant createdAt;

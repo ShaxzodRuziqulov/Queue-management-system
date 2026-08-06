@@ -92,6 +92,9 @@ public class AppUserService {
         boolean wasActive = entity.isActive();
         mapper.update(entity, request);
         if (StringUtils.hasText(request.getPassword())) {
+            if (!currentUserService.isAdmin()) {
+                throw new AccessDeniedException("Parolni o'zgartirish uchun joriy parolni kiriting");
+            }
             entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
         if (request.getRoles() != null && currentUserService.isAdmin()) {

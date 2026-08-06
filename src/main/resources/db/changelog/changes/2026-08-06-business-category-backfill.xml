@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-06-002-businesses-backfill-category" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="businesses"/>
+                <columnExists schemaName="public" tableName="businesses" columnName="category"/>
+            </and>
+        </preConditions>
+        <sql>
+            WITH business_text AS (
+                SELECT
+                    b.id,
+                    lower(
+                        concat_ws(
+                            ' ',
+                            b.name,
+                            b.description,
+                            b.address_line,
+                            b.city,
+                            string_agg(coalesce(os.name, '') || ' ' || coalesce(os.description, ''), ' ')
+                        )
+                    ) AS text_value
+                FROM public.businesses b
+                LEFT JOIN public.offered_services os ON os.business_id = b.id
+                WHERE b.category = 'OTHER'
+                GROUP BY b.id, b.name, b.description, b.address_line, b.city
+            )
+            UPDATE public.businesses b
+            SET category = CASE
+                WHEN bt.text_value ~ '(sartarosh|barber|barbershop|soch|hair|haircut)' THEN 'BARBER'
+                WHEN bt.text_value ~ '(go''zallik|gozallik|beauty|makeup|kosmetik|spa|nail|tirnoq|massaj)' THEN 'BEAUTY'
+                WHEN bt.text_value ~ '(tibbiyot|medical|clinic|klinika|doktor|stomatolog|shifokor)' THEN 'MEDICAL'
+                WHEN bt.text_value ~ '(ta''mir|tamir|repair|usta|servis|telefon|kompyuter)' THEN 'REPAIR'
+                WHEN bt.text_value ~ '(konsult|consult|maslahat)' THEN 'CONSULTING'
+                WHEN bt.text_value ~ '(ta''lim|talim|education|kurs|o''quv|oquv|ustoz)' THEN 'EDUCATION'
+                WHEN bt.text_value ~ '(sport|fitness|gym|trenajor|murabbiy)' THEN 'FITNESS'
+                WHEN bt.text_value ~ '(avto|auto|mashina|car|avtoservis)' THEN 'AUTO'
+                WHEN bt.text_value ~ '(yuridik|legal|advokat|huquq)' THEN 'LEGAL'
+                ELSE b.category
+            END
+            FROM business_text bt
+            WHERE b.id = bt.id;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

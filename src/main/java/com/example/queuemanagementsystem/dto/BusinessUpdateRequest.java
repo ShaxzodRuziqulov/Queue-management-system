@@ -1,5 +1,6 @@
 package com.example.queuemanagementsystem.dto;
 
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -24,4 +25,6 @@ public class BusinessUpdateRequest {
 
     @Size(max = 32)
     private String contactPhone;
+
+    private BusinessCategory category;
 }

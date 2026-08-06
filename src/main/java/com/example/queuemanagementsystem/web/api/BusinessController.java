@@ -1,5 +1,7 @@
 package com.example.queuemanagementsystem.web.api;
 
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
+import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import com.example.queuemanagementsystem.dto.*;
 import com.example.queuemanagementsystem.service.BusinessService;
 import jakarta.validation.Valid;
@@ -12,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,8 +27,17 @@ public class BusinessController {
     @GetMapping
     public ResponseEntity<Page<BusinessDto>> list(
             @RequestParam(required = false) UUID ownerId,
+            @RequestParam(required = false) BusinessCategory category,
+            @RequestParam(required = false) BusinessStatus status,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false, name = "q") String query,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(ownerId, pageable));
+        return ResponseEntity.ok(service.findAll(ownerId, category, status, city, query, pageable));
+    }
+
+    @GetMapping("/cities")
+    public ResponseEntity<List<String>> cities() {
+        return ResponseEntity.ok(service.findCities());
     }
 
     @GetMapping("/{id}")

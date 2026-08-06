@@ -1,6 +1,7 @@
 package com.example.queuemanagementsystem.dto;
 
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import lombok.Builder;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ public class BusinessDto {
     private BigDecimal latitude;
     private BigDecimal longitude;
     private String contactPhone;
+    private BusinessCategory category;
     private BusinessStatus status;
     private Instant trialEndDate;
     private Instant subscriptionEndDate;

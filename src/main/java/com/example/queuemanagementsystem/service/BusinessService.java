@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Business;
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import com.example.queuemanagementsystem.domain.enums.ReviewAction;
 import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
@@ -17,13 +18,16 @@ import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -39,11 +43,34 @@ public class BusinessService {
     private final RoleRepository roleRepository;
 
     @Transactional(readOnly = true)
-    public Page<BusinessDto> findAll(UUID ownerId, Pageable pageable) {
-        if (ownerId != null) {
-            return repository.findByOwner_Id(ownerId, pageable).map(mapper::toDto);
+    public Page<BusinessDto> findAll(UUID ownerId, BusinessCategory category, BusinessStatus status, String city, String q, Pageable pageable) {
+        String normalizedCity = normalizeFilter(city);
+        String normalizedQ = normalizeFilter(q);
+        String sortProperty = pageable.getSort().stream()
+                .findFirst()
+                .map(Sort.Order::getProperty)
+                .orElse("createdAt");
+        if ("rating".equals(sortProperty)) {
+            Pageable aggregatePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            return repository.searchOrderByRating(ownerId, category, status, normalizedCity, normalizedQ, aggregatePageable).map(mapper::toDto);
         }
-        return repository.findAll(pageable).map(mapper::toDto);
+        if ("reviews".equals(sortProperty)) {
+            Pageable aggregatePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+            return repository.searchOrderByReviewCount(ownerId, category, status, normalizedCity, normalizedQ, aggregatePageable).map(mapper::toDto);
+        }
+        return repository.search(ownerId, category, status, normalizedCity, normalizedQ, pageable).map(mapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findCities() {
+        return repository.findDistinctCities();
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.trim().toLowerCase();
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +89,9 @@ public class BusinessService {
 
         Business entity = mapper.toEntity(request);
         entity.setOwner(owner);
+        if (request.getCategory() == null) {
+            entity.setCategory(BusinessCategory.OTHER);
+        }
         // Yangi biznes har doim 14 kunlik TRIAL bilan boshlanadi
         entity.setStatus(BusinessStatus.TRIAL);
         entity.setTrialEndDate(Instant.now().plus(14, ChronoUnit.DAYS));

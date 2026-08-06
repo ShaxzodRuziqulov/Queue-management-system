@@ -1,5 +1,6 @@
 package com.example.queuemanagementsystem.dto;
 
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,4 +32,6 @@ public class BusinessCreateRequest {
 
     @Size(max = 32)
     private String contactPhone;
+
+    private BusinessCategory category;
 }

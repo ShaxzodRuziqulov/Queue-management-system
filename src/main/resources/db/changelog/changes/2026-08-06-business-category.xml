@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-06-001-businesses-add-category" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="businesses"/>
+                <not>
+                    <columnExists schemaName="public" tableName="businesses" columnName="category"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="businesses">
+            <column name="category" type="varchar(32)" defaultValue="OTHER">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

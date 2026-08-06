@@ -1,5 +1,6 @@
 package com.example.queuemanagementsystem.domain;
 
+import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -57,6 +58,10 @@ public class Business extends BaseEntity{
 
     @Column(length = 32)
     private String contactPhone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private BusinessCategory category = BusinessCategory.OTHER;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)

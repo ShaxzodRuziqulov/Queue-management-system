@@ -3,13 +3,17 @@ package com.example.queuemanagementsystem.service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailService {
     private final JavaMailSender mailSender;
 
@@ -18,6 +22,7 @@ public class EmailService {
 
     public void sendPasswordResetCode(String email, String code) {
         try {
+            log.info("Preparing password reset email to={}, from={}", maskEmail(email), maskEmail(fromEmail));
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
 
@@ -27,8 +32,13 @@ public class EmailService {
             helper.setText(buildPasswordResetHtml(code), true);
 
             mailSender.send(message);
+            log.info("Password reset email delivery accepted by mail sender for to={}", maskEmail(email));
         } catch (MessagingException e) {
+            log.error("Failed to prepare password reset email for to={}: {}", maskEmail(email), e.getMessage(), e);
             throw new IllegalStateException("Email xabarini tayyorlashda xatolik yuz berdi", e);
+        } catch (MailException e) {
+            log.error("Failed to send password reset email for to={}: {}", maskEmail(email), e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -75,5 +85,16 @@ public class EmailService {
                 </body>
                 </html>
                 """.formatted(code);
+    }
+
+    private String maskEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            return "";
+        }
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) {
+            return "***" + email.substring(Math.max(atIndex, 0));
+        }
+        return email.charAt(0) + "***" + email.substring(atIndex);
     }
 }

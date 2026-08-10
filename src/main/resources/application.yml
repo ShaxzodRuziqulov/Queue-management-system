@@ -12,6 +12,17 @@ security:
     expiration-time: 86400000
     refresh-expiration-time: 604800000
 spring:
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:janobprizident@gmail.com}
+    password: ${MAIL_PASSWORD:atpsfkxryfnpvejj}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
   servlet:

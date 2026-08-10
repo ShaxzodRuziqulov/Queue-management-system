@@ -34,7 +34,7 @@ public class PasswordResetService {
         String username = AppUserDetailsService.normalizeLogin(request.getLogin());
         log.info("Password reset requested for login={}", username);
 
-        appUserRepository.findByUsername(username).ifPresent(user -> {
+        appUserRepository.findByUsername(username).ifPresentOrElse(user -> {
             if (!StringUtils.hasText(user.getEmail())) {
                 log.warn("Password reset skipped for login={}: user has no email", username);
                 return;
@@ -51,7 +51,7 @@ public class PasswordResetService {
 
             emailService.sendPasswordResetCode(user.getEmail(), code);
             log.info("Password reset email sent for login={}, email={}", username, maskEmail(user.getEmail()));
-        });
+        }, () -> log.warn("Password reset skipped for login={}: user not found", username));
 
     }
 

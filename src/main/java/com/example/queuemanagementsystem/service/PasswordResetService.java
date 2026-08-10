@@ -10,6 +10,7 @@ import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
@@ -17,9 +18,9 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PasswordResetService {
 
-    private final AppUserService appUserService;
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetCodeRepository resetCodeRepository;
 
@@ -40,7 +41,7 @@ public class PasswordResetService {
             PasswordResetCode resetCode = new PasswordResetCode();
             resetCode.setUser(user);
             resetCode.setCodeHash(passwordEncoder.encode(code));
-            resetCode.setExpiresAt(LocalDateTime.now().plusSeconds(10));
+            resetCode.setExpiresAt(LocalDateTime.now().plusMinutes(10));
             resetCodeRepository.save(resetCode);
 
             emailService.sendPasswordResetCode(user.getEmail(), code);
@@ -79,7 +80,7 @@ public class PasswordResetService {
     }
 
     private String generateCode() {
-        int number = 100000 + secureRandom.nextInt(99999);
+        int number = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(number);
     }
 }

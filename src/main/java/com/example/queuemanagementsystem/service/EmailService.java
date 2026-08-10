@@ -9,6 +9,6 @@ public class EmailService {
 
     public void sendPasswordResetCode(String email, String code) {
 
-        log.info("Sending password reset code to email address {}", email, code);
+        log.info("Password reset code for {}: {}", email, code);
     }
 }

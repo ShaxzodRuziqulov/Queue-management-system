@@ -33,6 +33,6 @@ public class PasswordResetCode extends BaseEntity {
     }
 
     public boolean isUsed() {
-        return usedAt!=null;
+        return usedAt != null;
     }
 }

@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/public/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
@@ -57,12 +58,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/users/by-phone/**")
                         .hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/status-counts").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/businesses/me")
+                        .hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
+
                         // ── Ommaviy ko'rish: mijoz tizimga kirmasdan ham bizneslar/xizmatlarni
                         //    ko'ra oladi — faqat bron qilishda tizimga kirish talab qilinadi ──
                         .requestMatchers(HttpMethod.GET, "/api/v1/businesses", "/api/v1/businesses/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/services", "/api/v1/businesses/*/services/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/staff", "/api/v1/businesses/*/staff/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/businesses/*/hours", "/api/v1/businesses/*/hours/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/bookings/availability").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews").permitAll()
 
                         // ── ADMIN only ───────────────────────────────────────────
@@ -76,11 +82,11 @@ public class SecurityConfig {
                         // ── Business CRUD (owner creates/edits/deletes own business) ──
                         // ROLE_USER ham biznes yarata olishi kerak (birinchi marta, onboarding)
                         .requestMatchers(HttpMethod.POST, "/api/v1/businesses").hasAnyRole("USER", "BUSINESS_OWNER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/businesses/*").hasAnyRole("BUSINESS_OWNER", "ADMIN")
 
                         // ── Staff portal (o'z profili) ───────────────────────────
-                        .requestMatchers("/api/v1/staff/me/**").hasAnyRole("STAFF", "BUSINESS_OWNER", "MANAGER", "ADMIN")
+                        .requestMatchers("/api/v1/staff/me", "/api/v1/staff/me/**").hasRole("STAFF")
 
                         // ── Staff management ─────────────────────────────────────
                         .requestMatchers(HttpMethod.POST, "/api/v1/businesses/*/staff").hasAnyRole("BUSINESS_OWNER", "MANAGER", "ADMIN")

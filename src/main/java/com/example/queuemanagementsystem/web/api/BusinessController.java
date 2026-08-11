@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +39,20 @@ public class BusinessController {
     @GetMapping("/cities")
     public ResponseEntity<List<String>> cities() {
         return ResponseEntity.ok(service.findCities());
+    }
+
+    @GetMapping("/status-counts")
+    public ResponseEntity<Map<BusinessStatus, Long>> statusCounts(
+            @RequestParam(required = false) UUID ownerId,
+            @RequestParam(required = false) BusinessCategory category,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false, name = "q") String query) {
+        return ResponseEntity.ok(service.countByStatus(ownerId, category, city, query));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<BusinessDto> mine() {
+        return ResponseEntity.ok(service.getMine());
     }
 
     @GetMapping("/{id}")

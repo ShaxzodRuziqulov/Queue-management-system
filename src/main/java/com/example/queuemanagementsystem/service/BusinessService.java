@@ -10,11 +10,13 @@ import com.example.queuemanagementsystem.dto.BusinessDto;
 import com.example.queuemanagementsystem.dto.BusinessReviewRequest;
 import com.example.queuemanagementsystem.dto.BusinessStatusRequest;
 import com.example.queuemanagementsystem.dto.BusinessUpdateRequest;
+import com.example.queuemanagementsystem.dto.PublicBusinessSummaryDto;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.exception.BusinessAccessDeniedException;
 import com.example.queuemanagementsystem.mapper.BusinessMapper;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
 import com.example.queuemanagementsystem.repository.RoleRepository;
+import com.example.queuemanagementsystem.repository.StaffMemberRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -41,6 +45,7 @@ public class BusinessService {
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
     private final RoleRepository roleRepository;
+    private final StaffMemberRepository staffMemberRepository;
 
     @Transactional(readOnly = true)
     public Page<BusinessDto> findAll(UUID ownerId, BusinessCategory category, BusinessStatus status, String city, String q, Pageable pageable) {
@@ -64,6 +69,54 @@ public class BusinessService {
     @Transactional(readOnly = true)
     public List<String> findCities() {
         return repository.findDistinctCities();
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> findPublicCities() {
+        return repository.findPublicCities(Instant.now());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicBusinessSummaryDto> findPublic(BusinessCategory category, String city, String q, Pageable pageable) {
+        String normalizedCity = normalizeFilter(city);
+        String normalizedQ = normalizeFilter(q);
+        String sortProperty = pageable.getSort().stream()
+                .findFirst()
+                .map(Sort.Order::getProperty)
+                .orElse("rating");
+        Instant now = Instant.now();
+        if ("reviews".equals(sortProperty)) {
+            return repository.searchPublicOrderByReviewCount(category, normalizedCity, normalizedQ, now, pageable);
+        }
+        if ("name".equals(sortProperty)) {
+            return repository.searchPublicOrderByName(category, normalizedCity, normalizedQ, now, pageable);
+        }
+        return repository.searchPublicOrderByRating(category, normalizedCity, normalizedQ, now, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public BusinessDto getMine() {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        return repository.search(currentUserId, null, null, "", "", PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .or(() -> staffMemberRepository.findByLinkedUser_Id(currentUserId).map(staff -> staff.getBusiness()))
+                .map(mapper::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("Biznes topilmadi"));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<BusinessStatus, Long> countByStatus(UUID ownerId, BusinessCategory category, String city, String q) {
+        Map<BusinessStatus, Long> counts = new EnumMap<>(BusinessStatus.class);
+        for (BusinessStatus status : BusinessStatus.values()) {
+            counts.put(status, 0L);
+        }
+        String normalizedCity = normalizeFilter(city);
+        String normalizedQ = normalizeFilter(q);
+        for (Object[] row : repository.countByStatus(ownerId, category, normalizedCity, normalizedQ)) {
+            counts.put((BusinessStatus) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 
     private String normalizeFilter(String value) {
@@ -100,7 +153,7 @@ public class BusinessService {
 
     public BusinessDto update(UUID id, BusinessUpdateRequest request) {
         Business entity = requireBusiness(id);
-        requireOwnerOrAdmin(entity);
+        requireManagerOrAdmin(entity);
         mapper.update(entity, request);
         return mapper.toDto(entity);
     }
@@ -174,9 +227,17 @@ public class BusinessService {
         requireOwnerOrAdmin(requireBusiness(businessId));
     }
 
+    public void requireManagerOrAdmin(UUID businessId) {
+        requireManagerOrAdmin(requireBusiness(businessId));
+    }
+
     /** requireOwnerOrAdmin bilan bir xil tekshiruv, lekin istisno otmasdan boolean qaytaradi. */
     public boolean isOwnerOrAdmin(UUID businessId) {
         return isOwnerOrAdmin(requireBusiness(businessId));
+    }
+
+    public boolean isManagerOrAdmin(UUID businessId) {
+        return isManagerOrAdmin(requireBusiness(businessId));
     }
 
     private boolean isOwnerOrAdmin(Business entity) {
@@ -184,8 +245,23 @@ public class BusinessService {
                 || entity.getOwner().getId().equals(currentUserService.getCurrentUserId());
     }
 
+    private boolean isManagerOrAdmin(Business entity) {
+        if (isOwnerOrAdmin(entity)) {
+            return true;
+        }
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        return currentUserService.hasRole("MANAGER")
+                && staffMemberRepository.existsByBusiness_IdAndLinkedUser_Id(entity.getId(), currentUserId);
+    }
+
     private void requireOwnerOrAdmin(Business entity) {
         if (!isOwnerOrAdmin(entity)) {
+            throw new AccessDeniedException("Bu biznesga ruxsat yo'q");
+        }
+    }
+
+    private void requireManagerOrAdmin(Business entity) {
+        if (!isManagerOrAdmin(entity)) {
             throw new AccessDeniedException("Bu biznesga ruxsat yo'q");
         }
     }

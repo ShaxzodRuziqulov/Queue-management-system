@@ -7,6 +7,7 @@ import com.example.queuemanagementsystem.domain.OfferedService;
 import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.domain.enums.BookingStatus;
 import com.example.queuemanagementsystem.domain.enums.Weekday;
+import com.example.queuemanagementsystem.dto.BookingAvailabilityDto;
 import com.example.queuemanagementsystem.dto.BookingCreateRequest;
 import com.example.queuemanagementsystem.dto.BookingDto;
 import com.example.queuemanagementsystem.dto.BookingUpdateRequest;
@@ -19,18 +20,23 @@ import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import jakarta.persistence.criteria.JoinType;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -73,7 +79,7 @@ public class BookingService {
     private final CustomerService customerService;
 
     @Transactional(readOnly = true)
-    public Page<BookingDto> findAll(UUID customerId, UUID businessId, LocalDate date, Pageable pageable) {
+    public Page<BookingDto> findAll(UUID customerId, UUID businessId, LocalDate date, BookingStatus status, String q, Pageable pageable) {
         if (customerId != null) {
             if (!currentUserService.isAdmin() && !customerId.equals(currentUserService.getCurrentUserId())) {
                 throw new AccessDeniedException("Boshqa mijozning bronlarini ko'rish mumkin emas");
@@ -82,18 +88,71 @@ public class BookingService {
             return repository.findByCustomer_Id(customerId, pageable).map(mapper::toDto);
         }
         if (businessId != null) {
-            businessService.requireOwnerOrAdmin(businessId);
-            if (date != null) {
-                Instant dayStart = date.atStartOfDay(BUSINESS_ZONE).toInstant();
-                Instant dayEnd = date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
-                return repository.findByBusiness_IdAndStartAtBetween(businessId, dayStart, dayEnd, pageable).map(mapper::toDto);
-            }
-            return repository.findByBusiness_Id(businessId, pageable).map(mapper::toDto);
+            businessService.requireManagerOrAdmin(businessId);
+            return repository.findAll(bookingFilter(businessId, date, status, q), pageable).map(mapper::toDto);
         }
         if (!currentUserService.isAdmin()) {
             throw new AccessDeniedException("Bronlar ro'yxatini ko'rish uchun customerId yoki businessId filtri talab qilinadi");
         }
         return repository.findAll(pageable).map(mapper::toDto);
+    }
+
+    private Specification<Booking> bookingFilter(UUID businessId, LocalDate date, BookingStatus status, String q) {
+        return (root, query, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("business").get("id"), businessId));
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (date != null) {
+                Instant dayStart = date.atStartOfDay(BUSINESS_ZONE).toInstant();
+                Instant dayEnd = date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+                predicates.add(cb.greaterThanOrEqualTo(root.get("startAt"), dayStart));
+                predicates.add(cb.lessThan(root.get("startAt"), dayEnd));
+            }
+            if (StringUtils.hasText(q)) {
+                String pattern = "%" + q.trim().toLowerCase() + "%";
+                var customer = root.join("customer", JoinType.LEFT);
+                var client = root.join("client", JoinType.LEFT);
+                var offeredService = root.join("offeredService", JoinType.LEFT);
+                var staff = root.join("staff", JoinType.LEFT);
+
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.<String>get("guestName")), pattern),
+                        cb.like(cb.lower(root.<String>get("guestPhone")), pattern),
+                        cb.like(cb.lower(root.<String>get("customerNote")), pattern),
+                        cb.like(cb.lower(client.<String>get("fullName")), pattern),
+                        cb.like(cb.lower(client.<String>get("phone")), pattern),
+                        cb.like(cb.lower(offeredService.<String>get("name")), pattern),
+                        cb.like(cb.lower(staff.<String>get("firstName")), pattern),
+                        cb.like(cb.lower(staff.<String>get("lastName")), pattern),
+                        cb.like(cb.lower(customer.<String>get("firstName")), pattern),
+                        cb.like(cb.lower(customer.<String>get("lastName")), pattern),
+                        cb.like(cb.lower(customer.<String>get("username")), pattern)
+                ));
+            }
+
+            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingAvailabilityDto> findAvailability(UUID businessId, LocalDate date) {
+        businessService.requireActiveAccess(businessId);
+        Instant dayStart = date.atStartOfDay(BUSINESS_ZONE).toInstant();
+        Instant dayEnd = date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+        return repository.findByBusiness_IdAndStartAtBetween(businessId, dayStart, dayEnd)
+                .stream()
+                .filter(booking -> !NON_BLOCKING_STATUSES.contains(booking.getStatus()))
+                .map(booking -> BookingAvailabilityDto.builder()
+                        .id(booking.getId())
+                        .staffId(booking.getStaff() == null ? null : booking.getStaff().getId())
+                        .startAt(booking.getStartAt())
+                        .endAt(booking.getEndAt())
+                        .status(booking.getStatus())
+                        .build())
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -109,7 +168,7 @@ public class BookingService {
         if (!request.getEndAt().isAfter(request.getStartAt())) {
             throw new IllegalArgumentException("Tugash vaqti boshlanishdan keyin bo'lishi kerak");
         }
-        boolean isBusinessManager = businessService.isOwnerOrAdmin(request.getBusinessId());
+        boolean isBusinessManager = businessService.isManagerOrAdmin(request.getBusinessId());
         boolean isBusinessStaff = staffMemberService.isCurrentUserStaffOfBusiness(request.getBusinessId());
         boolean isSelfBooking = request.getCustomerId() != null
                 && request.getCustomerId().equals(currentUserService.getCurrentUserId());
@@ -202,7 +261,7 @@ public class BookingService {
     private boolean isParticipant(Booking booking) {
         UUID currentUserId = currentUserService.getCurrentUserId();
         boolean isCustomer = booking.getCustomer() != null && booking.getCustomer().getId().equals(currentUserId);
-        boolean isBusinessManager = businessService.isOwnerOrAdmin(booking.getBusiness().getId());
+        boolean isBusinessManager = businessService.isManagerOrAdmin(booking.getBusiness().getId());
         boolean isAssignedStaff = booking.getStaff() != null
                 && staffMemberService.isCurrentUserLinkedTo(booking.getStaff().getId());
         return isCustomer || isBusinessManager || isAssignedStaff;
@@ -220,7 +279,7 @@ public class BookingService {
         }
         UUID currentUserId = currentUserService.getCurrentUserId();
         boolean isCustomer = booking.getCustomer() != null && booking.getCustomer().getId().equals(currentUserId);
-        boolean isBusinessManager = businessService.isOwnerOrAdmin(booking.getBusiness().getId());
+        boolean isBusinessManager = businessService.isManagerOrAdmin(booking.getBusiness().getId());
         boolean isAssignedStaff = booking.getStaff() != null
                 && staffMemberService.isCurrentUserLinkedTo(booking.getStaff().getId());
 

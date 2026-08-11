@@ -28,10 +28,15 @@ public class CurrentUserService {
     }
 
     public boolean isAdmin() {
+        return hasRole("ADMIN");
+    }
+
+    public boolean hasRole(String role) {
         Authentication auth = getAuthentication();
         if (auth == null) return false;
+        String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals(authority));
     }
 
     private Authentication getAuthentication() {

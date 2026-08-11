@@ -37,21 +37,21 @@ public class BusinessHoursService {
     }
 
     public BusinessHoursDto create(UUID businessId, BusinessHoursCreateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         BusinessHours entity = mapper.toEntity(request);
         entity.setBusiness(businessService.requireActiveAccess(businessId));
         return mapper.toDto(repository.save(entity));
     }
 
     public BusinessHoursDto update(UUID businessId, UUID hoursId, BusinessHoursUpdateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         BusinessHours entity = requireHours(businessId, hoursId);
         mapper.update(entity, request);
         return mapper.toDto(entity);
     }
 
     public void delete(UUID businessId, UUID hoursId) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         BusinessHours entity = requireHours(businessId, hoursId);
         repository.delete(entity);
     }

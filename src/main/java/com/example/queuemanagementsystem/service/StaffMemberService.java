@@ -110,7 +110,7 @@ public class StaffMemberService {
     }
 
     public StaffMemberDto create(UUID businessId, StaffMemberCreateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = mapper.toEntity(request);
         entity.setBusiness(businessService.requireActiveAccess(businessId));
         applyServices(entity, businessId, request.getServiceIds());
@@ -129,7 +129,7 @@ public class StaffMemberService {
      * o'z portalidan foydalana oladi.
      */
     public StaffMemberDto registerStaff(UUID businessId, StaffRegisterRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         Business business = businessService.requireActiveAccess(businessId);
         AppUser newUser = userService.createAccountForStaff(
                 request.getLogin(), request.getPassword(), request.getFirstName(), request.getLastName(),
@@ -154,7 +154,7 @@ public class StaffMemberService {
      * (login/parol) ochib beradi va shu xodim yozuviga bog'laydi.
      */
     public StaffMemberDto registerAccountForExisting(UUID businessId, UUID staffId, StaffRegisterRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         if (entity.getLinkedUser() != null) {
             throw new IllegalStateException("Bu xodim allaqachon foydalanuvchi hisobiga bog'langan");
@@ -178,7 +178,7 @@ public class StaffMemberService {
      */
     @Transactional(readOnly = true)
     public UserLookupDto getLinkedAccountInfo(UUID businessId, UUID staffId) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         AppUser linkedUser = entity.getLinkedUser();
         if (linkedUser == null) {
@@ -195,7 +195,7 @@ public class StaffMemberService {
     }
 
     public StaffMemberDto updateLinkedAccount(UUID businessId, UUID staffId, StaffAccountUpdateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         AppUser linkedUser = entity.getLinkedUser();
         if (linkedUser == null) {
@@ -215,7 +215,7 @@ public class StaffMemberService {
     }
 
     public StaffMemberDto update(UUID businessId, UUID staffId, StaffMemberUpdateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
 
         boolean isNewLink = request.getLinkedUserId() != null
@@ -248,7 +248,7 @@ public class StaffMemberService {
     }
 
     public void delete(UUID businessId, UUID staffId) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         StaffMember entity = requireStaff(businessId, staffId);
         // Bog'langan foydalanuvchidan ROLE_STAFF ni olib tashlash
         if (entity.getLinkedUser() != null) {

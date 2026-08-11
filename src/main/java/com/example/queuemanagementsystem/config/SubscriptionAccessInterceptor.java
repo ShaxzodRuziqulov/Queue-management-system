@@ -69,7 +69,11 @@ public class SubscriptionAccessInterceptor implements HandlerInterceptor {
         if (!(attr instanceof Map<?, ?> vars)) {
             return null;
         }
-        Object raw = ((Map<String, String>) vars).get("businessId");
+        Map<String, String> pathVars = (Map<String, String>) vars;
+        Object raw = pathVars.get("businessId");
+        if (raw == null && request.getRequestURI().matches(".*/api/v1/businesses/[^/]+$")) {
+            raw = pathVars.get("id");
+        }
         if (raw == null) {
             return null;
         }

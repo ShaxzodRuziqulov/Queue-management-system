@@ -29,7 +29,7 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public Page<CustomerDto> findAll(UUID businessId, String search, Pageable pageable) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         Page<Customer> page = StringUtils.hasText(search)
                 ? repository.search(businessId, search.trim(), pageable)
                 : repository.findByBusiness_Id(businessId, pageable);
@@ -38,12 +38,12 @@ public class CustomerService {
 
     @Transactional(readOnly = true)
     public CustomerDto get(UUID businessId, UUID customerId) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         return mapper.toDto(requireCustomer(businessId, customerId));
     }
 
     public CustomerDto create(UUID businessId, CustomerCreateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         Business business = businessService.requireActiveAccess(businessId);
         if (StringUtils.hasText(request.getPhone())) {
             String phone = request.getPhone().trim();
@@ -58,7 +58,7 @@ public class CustomerService {
     }
 
     public CustomerDto update(UUID businessId, UUID customerId, CustomerUpdateRequest request) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         Customer entity = requireCustomer(businessId, customerId);
         // Telefon o'zgarayotgan bo'lsa — boshqa mijozda band emasligini tekshiramiz
         if (StringUtils.hasText(request.getPhone())) {
@@ -75,7 +75,7 @@ public class CustomerService {
     }
 
     public void delete(UUID businessId, UUID customerId) {
-        businessService.requireOwnerOrAdmin(businessId);
+        businessService.requireManagerOrAdmin(businessId);
         Customer entity = requireCustomer(businessId, customerId);
         repository.delete(entity);
     }

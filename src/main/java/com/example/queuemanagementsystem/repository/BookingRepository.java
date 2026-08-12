@@ -27,9 +27,42 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             LEFT JOIN b.offeredService offeredService
             LEFT JOIN b.staff staff
             WHERE b.business.id = :businessId
-              AND (:status IS NULL OR b.status = :status)
-              AND (:dayStart IS NULL OR b.startAt >= :dayStart)
-              AND (:dayEnd IS NULL OR b.startAt < :dayEnd)
+              AND b.status = :status
+              AND b.startAt >= :dayStart
+              AND b.startAt < :dayEnd
+              AND (
+                :q = '' OR
+                LOWER(COALESCE(b.guestName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.guestPhone, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.customerNote, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(client.fullName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(client.phone, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(offeredService.name, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(customer.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(customer.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(customer.username, '')) LIKE CONCAT('%', :q, '%')
+              )
+            """)
+    Page<Booking> searchByBusinessAndStatus(
+            @Param("businessId") UUID businessId,
+            @Param("dayStart") Instant dayStart,
+            @Param("dayEnd") Instant dayEnd,
+            @Param("status") BookingStatus status,
+            @Param("q") String q,
+            Pageable pageable);
+
+    @Query("""
+            SELECT b
+            FROM Booking b
+            LEFT JOIN b.customer customer
+            LEFT JOIN b.client client
+            LEFT JOIN b.offeredService offeredService
+            LEFT JOIN b.staff staff
+            WHERE b.business.id = :businessId
+              AND b.startAt >= :dayStart
+              AND b.startAt < :dayEnd
               AND (
                 :q = '' OR
                 LOWER(COALESCE(b.guestName, '')) LIKE CONCAT('%', :q, '%') OR
@@ -49,7 +82,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             @Param("businessId") UUID businessId,
             @Param("dayStart") Instant dayStart,
             @Param("dayEnd") Instant dayEnd,
-            @Param("status") BookingStatus status,
             @Param("q") String q,
             Pageable pageable);
 

@@ -42,6 +42,8 @@ public class BookingService {
 
     /** Bookinglar biznesning mahalliy vaqti bo'yicha tekshiriladi (ish vaqti). */
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Tashkent");
+    private static final Instant MIN_BOOKING_SEARCH_INSTANT = Instant.parse("1970-01-01T00:00:00Z");
+    private static final Instant MAX_BOOKING_SEARCH_INSTANT = Instant.parse("9999-12-31T23:59:59Z");
 
     private static final Set<BookingStatus> NON_BLOCKING_STATUSES = Set.of(
             BookingStatus.CANCELLED_BY_CUSTOMER,
@@ -85,10 +87,13 @@ public class BookingService {
         }
         if (businessId != null) {
             businessService.requireManagerOrAdmin(businessId);
-            Instant dayStart = date == null ? null : date.atStartOfDay(BUSINESS_ZONE).toInstant();
-            Instant dayEnd = date == null ? null : date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
-            return repository.searchByBusiness(businessId, dayStart, dayEnd, status, normalizeFilter(q), pageable)
-                    .map(mapper::toDto);
+            Instant dayStart = date == null ? MIN_BOOKING_SEARCH_INSTANT : date.atStartOfDay(BUSINESS_ZONE).toInstant();
+            Instant dayEnd = date == null ? MAX_BOOKING_SEARCH_INSTANT : date.plusDays(1).atStartOfDay(BUSINESS_ZONE).toInstant();
+            String normalizedQ = normalizeFilter(q);
+            Page<Booking> page = status == null
+                    ? repository.searchByBusiness(businessId, dayStart, dayEnd, normalizedQ, pageable)
+                    : repository.searchByBusinessAndStatus(businessId, dayStart, dayEnd, status, normalizedQ, pageable);
+            return page.map(mapper::toDto);
         }
         if (!currentUserService.isAdmin()) {
             throw new AccessDeniedException("Bronlar ro'yxatini ko'rish uchun customerId yoki businessId filtri talab qilinadi");

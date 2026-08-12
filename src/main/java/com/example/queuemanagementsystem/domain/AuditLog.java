@@ -1,5 +1,6 @@
 package com.example.queuemanagementsystem.domain;
 
+import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +22,9 @@ public class AuditLog extends BaseEntity {
     /**
      * Harakat kodi: BUSINESS_STATUS_CHANGED, BUSINESS_REVIEWED, USER_DELETED ...
      */
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 64)
-    private String action;
+    private AuditAction action;
 
     /**
      * Entity turi: BUSINESS, USER
@@ -42,7 +44,7 @@ public class AuditLog extends BaseEntity {
     @Column(columnDefinition = "text")
     private String details;
 
-    public AuditLog(String adminLogin, String action, String entityType, String entityId, String details) {
+    public AuditLog(String adminLogin, AuditAction action, String entityType, String entityId, String details) {
         this.adminLogin = adminLogin;
         this.action = action;
         this.entityType = entityType;

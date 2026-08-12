@@ -1,13 +1,13 @@
 package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AuditLog;
+import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import com.example.queuemanagementsystem.dto.AuditLogDto;
 import com.example.queuemanagementsystem.repository.AuditLogRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,23 +21,12 @@ public class AuditLogService {
     private final AuditLogRepository repository;
     private final CurrentUserService currentUserService;
 
-    // ── Harakat kodlari ─────────────────────────────────────────────────────
-    public static final String BUSINESS_STATUS_CHANGED = "BUSINESS_STATUS_CHANGED";
-    public static final String BUSINESS_REVIEWED       = "BUSINESS_REVIEWED";
-    public static final String BUSINESS_DELETED        = "BUSINESS_DELETED";
-    public static final String USER_CREATED            = "USER_CREATED";
-    public static final String USER_UPDATED            = "USER_UPDATED";
-    public static final String USER_ACTIVATED          = "USER_ACTIVATED";
-    public static final String USER_DEACTIVATED        = "USER_DEACTIVATED";
-    public static final String USER_ROLE_CHANGED       = "USER_ROLE_CHANGED";
-    public static final String USER_DELETED            = "USER_DELETED";
-
     /**
      * Hozirgi admin nomidan log yozadi.
-     * Alohida tranzaksiyada ishlaydi — asosiy tranzaksiya rollback bo'lsa ham log saqlanadi.
+     * Alohida tranzaksiyada ishlaydi - asosiy tranzaksiya rollback bo'lsa ham log saqlanadi.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void log(String action, String entityType, String entityId, String details) {
+    public void log(AuditAction action, String entityType, String entityId, String details) {
         String adminLogin = currentUserService.getCurrentUsername();
         if (adminLogin == null) adminLogin = "system";
         repository.saveAndFlush(new AuditLog(adminLogin, action, entityType, entityId, details));
@@ -45,31 +34,40 @@ public class AuditLogService {
 
     @Transactional(readOnly = true)
     public Page<AuditLogDto> findAll(String entityType, String action, String adminLogin, Pageable pageable) {
-        return repository.findAll(buildFilter(entityType, action, adminLogin), pageable).map(this::toDto);
+        return repository.search(
+                normalizeExactFilter(entityType),
+                parseAction(action),
+                normalizeLikeFilter(adminLogin),
+                pageable
+        ).map(this::toDto);
     }
 
-    private Specification<AuditLog> buildFilter(String entityType, String action, String adminLogin) {
-        return (root, query, cb) -> {
-            var predicate = cb.conjunction();
-            if (entityType != null && !entityType.isBlank()) {
-                predicate = cb.and(predicate, cb.equal(root.get("entityType"), entityType));
-            }
-            if (action != null && !action.isBlank()) {
-                predicate = cb.and(predicate, cb.equal(root.get("action"), action));
-            }
-            if (adminLogin != null && !adminLogin.isBlank()) {
-                String pattern = "%" + adminLogin.toLowerCase(Locale.ROOT) + "%";
-                predicate = cb.and(predicate, cb.like(cb.lower(root.get("adminLogin")), pattern));
-            }
-            return predicate;
-        };
+    private AuditAction parseAction(String action) {
+        if (action == null || action.isBlank()) {
+            return null;
+        }
+        return AuditAction.valueOf(action.trim().toUpperCase(Locale.ROOT));
+    }
+
+    private String normalizeExactFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.trim();
+    }
+
+    private String normalizeLikeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
     }
 
     private AuditLogDto toDto(AuditLog log) {
         return AuditLogDto.builder()
                 .id(log.getId())
                 .adminLogin(log.getAdminLogin())
-                .action(log.getAction())
+                .action(log.getAction().name())
                 .entityType(log.getEntityType())
                 .entityId(log.getEntityId())
                 .details(log.getDetails())

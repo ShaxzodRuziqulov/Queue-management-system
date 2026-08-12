@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Role;
+import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import com.example.queuemanagementsystem.dto.*;
 import com.example.queuemanagementsystem.dto.auth.RegisterRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
@@ -109,13 +110,13 @@ public class AppUserService {
         if (currentUserService.isAdmin()) {
             if (request.getActive() != null && request.getActive() != wasActive) {
                 auditLogService.log(
-                        request.getActive() ? AuditLogService.USER_ACTIVATED : AuditLogService.USER_DEACTIVATED,
+                        request.getActive() ? AuditAction.USER_ACTIVATED : AuditAction.USER_DEACTIVATED,
                         "USER", id.toString(), entity.getUsername());
             } else if (request.getRoles() != null) {
-                auditLogService.log(AuditLogService.USER_ROLE_CHANGED, "USER", id.toString(),
+                auditLogService.log(AuditAction.USER_ROLE_CHANGED, "USER", id.toString(),
                         "Yangi rollar: " + request.getRoles());
             } else {
-                auditLogService.log(AuditLogService.USER_UPDATED, "USER", id.toString(),
+                auditLogService.log(AuditAction.USER_UPDATED, "USER", id.toString(),
                         entity.getUsername());
             }
         }
@@ -136,7 +137,7 @@ public class AppUserService {
     public void delete(UUID id) {
         AppUser entity = requireUser(id);
         repository.deleteById(id);
-        auditLogService.log(AuditLogService.USER_DELETED, "USER", id.toString(), entity.getUsername());
+        auditLogService.log(AuditAction.USER_DELETED, "USER", id.toString(), entity.getUsername());
     }
 
     public AppUser requireUser(UUID id) {

@@ -2,6 +2,7 @@ package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Business;
+import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import com.example.queuemanagementsystem.domain.enums.ReviewAction;
@@ -23,16 +24,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.criteria.JoinType;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +64,7 @@ public class BusinessService {
             return repository.searchOrderByReviewCount(ownerId, category, status, normalizedCity, normalizedQ, unsortedPageable(pageable))
                     .map(mapper::toDto);
         }
-        return repository.findAll(businessFilter(ownerId, category, status, city, q), pageable).map(mapper::toDto);
+        return repository.search(ownerId, category, status, normalizedCity, normalizedQ, pageable).map(mapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +98,7 @@ public class BusinessService {
     @Transactional(readOnly = true)
     public BusinessDto getMine() {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        return repository.findAll(businessFilter(currentUserId, null, null, null, null), PageRequest.of(0, 1))
+        return repository.search(currentUserId, null, null, "", "", PageRequest.of(0, 1))
                 .stream()
                 .findFirst()
                 .or(() -> staffMemberRepository.findByLinkedUser_Id(currentUserId).map(staff -> staff.getBusiness()))
@@ -119,40 +116,6 @@ public class BusinessService {
             counts.put((BusinessStatus) row[0], (Long) row[1]);
         }
         return counts;
-    }
-
-    private Specification<Business> businessFilter(UUID ownerId, BusinessCategory category, BusinessStatus status, String city, String q) {
-        return (root, query, cb) -> {
-            if (query != null) {
-                query.distinct(true);
-            }
-            List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
-            if (ownerId != null) {
-                predicates.add(cb.equal(root.get("owner").get("id"), ownerId));
-            }
-            if (category != null) {
-                predicates.add(cb.equal(root.get("category"), category));
-            }
-            if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
-            }
-            if (city != null && !city.isBlank()) {
-                predicates.add(cb.equal(cb.lower(root.get("city")), city.trim().toLowerCase()));
-            }
-            if (q != null && !q.isBlank()) {
-                String pattern = "%" + q.trim().toLowerCase() + "%";
-                var services = root.join("offeredServices", JoinType.LEFT);
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.<String>get("name")), pattern),
-                        cb.like(cb.lower(root.<String>get("description")), pattern),
-                        cb.like(cb.lower(root.<String>get("addressLine")), pattern),
-                        cb.like(cb.lower(root.<String>get("city")), pattern),
-                        cb.like(cb.lower(services.<String>get("name")), pattern),
-                        cb.like(cb.lower(services.<String>get("description")), pattern)
-                ));
-            }
-            return cb.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
-        };
     }
 
     private String normalizeFilter(String value) {
@@ -213,7 +176,7 @@ public class BusinessService {
         entity.setSubscriptionEndDate(request.getSubscriptionEndDate());
         BusinessDto result = mapper.toDto(repository.save(entity));
         auditLogService.log(
-                AuditLogService.BUSINESS_STATUS_CHANGED, "BUSINESS", id.toString(),
+                AuditAction.BUSINESS_STATUS_CHANGED, "BUSINESS", id.toString(),
                 oldStatus + " → " + request.getStatus().name());
         return result;
     }
@@ -245,7 +208,7 @@ public class BusinessService {
 
         BusinessDto result = mapper.toDto(repository.save(entity));
         auditLogService.log(
-                AuditLogService.BUSINESS_REVIEWED, "BUSINESS", id.toString(),
+                AuditAction.BUSINESS_REVIEWED, "BUSINESS", id.toString(),
                 request.getAction().name() + (request.getNote() != null ? ": " + request.getNote() : ""));
         return result;
     }
@@ -254,7 +217,7 @@ public class BusinessService {
         Business entity = requireBusiness(id);
         requireOwnerOrAdmin(entity);
         repository.deleteById(id);
-        auditLogService.log(AuditLogService.BUSINESS_DELETED, "BUSINESS", id.toString(),
+        auditLogService.log(AuditAction.BUSINESS_DELETED, "BUSINESS", id.toString(),
                 "Biznes o'chirildi: " + entity.getName());
     }
 

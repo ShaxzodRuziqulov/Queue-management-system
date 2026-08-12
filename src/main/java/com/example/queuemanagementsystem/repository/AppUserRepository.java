@@ -25,6 +25,5 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
      * Telefon raqamining oxiri bo'yicha qidiradi — mamlakat kodi (998) yoki formatlashdan
      * qat'i nazar mos kelishi uchun. {@code suffix} — faqat raqamli oxirgi qism (odatda 9 xona).
      */
-    @Query("SELECT u FROM AppUser u WHERE u.phone LIKE CONCAT('%', :suffix)")
-    List<AppUser> findByPhoneEndingWith(@Param("suffix") String suffix);
+    List<AppUser> findByPhoneEndingWith(String suffix);
 }

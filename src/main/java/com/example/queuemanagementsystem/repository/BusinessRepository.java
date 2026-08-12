@@ -30,17 +30,19 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             FROM Business b
             WHERE b.city IS NOT NULL AND b.city <> ''
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
             ORDER BY b.city
             """)
-    List<String> findPublicCities(@Param("now") Instant now);
+    List<String> findPublicCities(
+            @Param("trialStatus") BusinessStatus trialStatus,
+            @Param("activeStatus") BusinessStatus activeStatus,
+            @Param("now") Instant now);
 
     @Query("""
-            SELECT DISTINCT b
+            SELECT b
             FROM Business b
-            LEFT JOIN b.offeredServices os
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
               AND (:category IS NULL OR b.category = :category)
               AND (:status IS NULL OR b.status = :status)
@@ -51,8 +53,15 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<Business> search(
@@ -66,7 +75,6 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
     @Query(value = """
             SELECT b
             FROM Business b
-            LEFT JOIN b.offeredServices os
             LEFT JOIN b.bookings bk
             LEFT JOIN Review r ON r.booking = bk
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
@@ -79,16 +87,22 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             GROUP BY b
             ORDER BY COALESCE(AVG(r.stars), 0) DESC, b.createdAt DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT b)
+            SELECT COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
               AND (:category IS NULL OR b.category = :category)
               AND (:status IS NULL OR b.status = :status)
@@ -99,8 +113,15 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<Business> searchOrderByRating(
@@ -114,7 +135,6 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
     @Query(value = """
             SELECT b
             FROM Business b
-            LEFT JOIN b.offeredServices os
             LEFT JOIN b.bookings bk
             LEFT JOIN Review r ON r.booking = bk
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
@@ -127,16 +147,22 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             GROUP BY b
             ORDER BY COUNT(DISTINCT r.id) DESC, b.createdAt DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT b)
+            SELECT COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
               AND (:category IS NULL OR b.category = :category)
               AND (:status IS NULL OR b.status = :status)
@@ -147,8 +173,15 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<Business> searchOrderByReviewCount(
@@ -180,8 +213,8 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR
@@ -196,14 +229,13 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             ORDER BY COALESCE(AVG(r.stars), 0) DESC, b.createdAt DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT b)
+            SELECT COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os WITH os.active = true
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR
@@ -211,14 +243,24 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND os.active = true
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<PublicBusinessSummaryDto> searchPublicOrderByRating(
             @Param("category") BusinessCategory category,
             @Param("city") String city,
             @Param("q") String q,
+            @Param("trialStatus") BusinessStatus trialStatus,
+            @Param("activeStatus") BusinessStatus activeStatus,
             @Param("now") Instant now,
             Pageable pageable);
 
@@ -234,8 +276,8 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR LOWER(b.name) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
@@ -246,25 +288,35 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             ORDER BY COUNT(DISTINCT r.id) DESC, b.createdAt DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT b)
+            SELECT COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os WITH os.active = true
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR LOWER(b.name) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND os.active = true
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<PublicBusinessSummaryDto> searchPublicOrderByReviewCount(
             @Param("category") BusinessCategory category,
             @Param("city") String city,
             @Param("q") String q,
+            @Param("trialStatus") BusinessStatus trialStatus,
+            @Param("activeStatus") BusinessStatus activeStatus,
             @Param("now") Instant now,
             Pageable pageable);
 
@@ -280,8 +332,8 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR LOWER(b.name) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
@@ -292,34 +344,43 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
             ORDER BY LOWER(b.name) ASC, b.createdAt DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT b)
+            SELECT COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os WITH os.active = true
             WHERE (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
               AND (
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.TRIAL AND b.trialEndDate > :now) OR
-                (b.status = com.example.queuemanagementsystem.domain.enums.BusinessStatus.ACTIVE AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
+                (b.status = :trialStatus AND b.trialEndDate > :now) OR
+                (b.status = :activeStatus AND (b.subscriptionEndDate IS NULL OR b.subscriptionEndDate > :now))
               )
               AND (
                 :q = '' OR LOWER(b.name) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND os.active = true
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             """)
     Page<PublicBusinessSummaryDto> searchPublicOrderByName(
             @Param("category") BusinessCategory category,
             @Param("city") String city,
             @Param("q") String q,
+            @Param("trialStatus") BusinessStatus trialStatus,
+            @Param("activeStatus") BusinessStatus activeStatus,
             @Param("now") Instant now,
             Pageable pageable);
 
     boolean existsByOwner_Id(UUID ownerId);
 
     @Query("""
-            SELECT b.status, COUNT(DISTINCT b)
+            SELECT b.status, COUNT(b)
             FROM Business b
-            LEFT JOIN b.offeredServices os
             WHERE (:ownerId IS NULL OR b.owner.id = :ownerId)
               AND (:category IS NULL OR b.category = :category)
               AND (:city = '' OR LOWER(b.city) = :city)
@@ -329,8 +390,15 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                EXISTS (
+                  SELECT 1
+                  FROM OfferedService os
+                  WHERE os.business = b
+                    AND (
+                      LOWER(COALESCE(os.name, '')) LIKE CONCAT('%', :q, '%') OR
+                      LOWER(COALESCE(os.description, '')) LIKE CONCAT('%', :q, '%')
+                    )
+                )
               )
             GROUP BY b.status
             """)

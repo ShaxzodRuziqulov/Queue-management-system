@@ -20,7 +20,7 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     /** Ism yoki telefon bo'yicha qidiruv (bitta biznes ichida). */
     @Query("select c from Customer c where c.business.id = :businessId and (" +
-            "lower(c.fullName) like lower(concat('%', :q, '%')) or " +
+            "lower(c.fullName) like concat('%', :q, '%') or " +
             "c.phone like concat('%', :q, '%'))")
     Page<Customer> search(@Param("businessId") UUID businessId, @Param("q") String q, Pageable pageable);
 }

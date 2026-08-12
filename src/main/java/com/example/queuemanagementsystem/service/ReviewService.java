@@ -43,7 +43,7 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public double avgRating(UUID staffId) {
-        return repository.avgStarsByStaffId(staffId);
+        return repository.calculateAverageStarsByStaffId(staffId);
     }
 
     @Transactional(readOnly = true)

@@ -2,6 +2,8 @@ package com.example.queuemanagementsystem.repository;
 
 import com.example.queuemanagementsystem.domain.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,8 +21,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     long countByStaff_Id(UUID staffId);
 
-    /** Xodimning o'rtacha reytingi */
-    @org.springframework.data.jpa.repository.Query(
-        "SELECT COALESCE(AVG(r.stars), 0) FROM Review r WHERE r.staff.id = :staffId")
-    double avgStarsByStaffId(@org.springframework.data.repository.query.Param("staffId") UUID staffId);
+    @Query("SELECT COALESCE(AVG(r.stars), 0) FROM Review r WHERE r.staff.id = :staffId")
+    double calculateAverageStarsByStaffId(@Param("staffId") UUID staffId);
 }

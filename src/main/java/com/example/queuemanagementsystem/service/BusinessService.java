@@ -6,6 +6,7 @@ import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
 import com.example.queuemanagementsystem.domain.enums.BusinessStatus;
 import com.example.queuemanagementsystem.domain.enums.ReviewAction;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
 import com.example.queuemanagementsystem.dto.BusinessCreateRequest;
 import com.example.queuemanagementsystem.dto.BusinessDto;
 import com.example.queuemanagementsystem.dto.BusinessReviewRequest;
@@ -16,7 +17,6 @@ import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.exception.BusinessAccessDeniedException;
 import com.example.queuemanagementsystem.mapper.BusinessMapper;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
-import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.repository.StaffMemberRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +45,8 @@ public class BusinessService {
     private final AppUserService userService;
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
-    private final RoleRepository roleRepository;
     private final StaffMemberRepository staffMemberRepository;
+    private final RoleService roleService;
 
     @Transactional(readOnly = true)
     public Page<BusinessDto> findAll(UUID ownerId, BusinessCategory category, BusinessStatus status, String city, String q, Pageable pageable) {
@@ -74,7 +74,7 @@ public class BusinessService {
 
     @Transactional(readOnly = true)
     public List<String> findPublicCities() {
-        return repository.findPublicCities(Instant.now());
+        return repository.findPublicCities(BusinessStatus.TRIAL, BusinessStatus.ACTIVE, Instant.now());
     }
 
     @Transactional(readOnly = true)
@@ -87,12 +87,21 @@ public class BusinessService {
                 .orElse("rating");
         Instant now = Instant.now();
         if ("reviews".equals(sortProperty)) {
-            return repository.searchPublicOrderByReviewCount(category, normalizedCity, normalizedQ, now, unsortedPageable(pageable));
+            return repository.searchPublicOrderByReviewCount(
+                    category, normalizedCity, normalizedQ,
+                    BusinessStatus.TRIAL, BusinessStatus.ACTIVE, now,
+                    unsortedPageable(pageable));
         }
         if ("name".equals(sortProperty)) {
-            return repository.searchPublicOrderByName(category, normalizedCity, normalizedQ, now, unsortedPageable(pageable));
+            return repository.searchPublicOrderByName(
+                    category, normalizedCity, normalizedQ,
+                    BusinessStatus.TRIAL, BusinessStatus.ACTIVE, now,
+                    unsortedPageable(pageable));
         }
-        return repository.searchPublicOrderByRating(category, normalizedCity, normalizedQ, now, unsortedPageable(pageable));
+        return repository.searchPublicOrderByRating(
+                category, normalizedCity, normalizedQ,
+                BusinessStatus.TRIAL, BusinessStatus.ACTIVE, now,
+                unsortedPageable(pageable));
     }
 
     @Transactional(readOnly = true)
@@ -141,7 +150,7 @@ public class BusinessService {
         }
         AppUser owner = userService.requireUser(ownerId);
         // Owner hali ROLE_BUSINESS_OWNER roliga ega bo'lmasa, avtomatik beriladi (Set — takror qo'shilmaydi)
-        roleRepository.assignRoleIfPresent(owner, "ROLE_BUSINESS_OWNER");
+        roleService.assignRole(owner, RoleName.ROLE_BUSINESS_OWNER);
 
         Business entity = mapper.toEntity(request);
         entity.setOwner(owner);

@@ -3,13 +3,13 @@ package com.example.queuemanagementsystem.service;
 import com.example.queuemanagementsystem.domain.AppUser;
 import com.example.queuemanagementsystem.domain.Role;
 import com.example.queuemanagementsystem.domain.enums.AuditAction;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
 import com.example.queuemanagementsystem.dto.*;
 import com.example.queuemanagementsystem.dto.auth.RegisterRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.AppUserMapper;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
-import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,12 +32,12 @@ public class AppUserService {
 
     private final AppUserRepository repository;
     private final BusinessRepository businessRepository;
-    private final RoleRepository roleRepository;
     private final AppUserMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserService currentUserService;
     private final FileStorageService fileStorageService;
     private final AuditLogService auditLogService;
+    private final RoleService roleService;
 
     @Transactional(readOnly = true)
     public List<AppUserDto> findAll() {
@@ -60,7 +59,7 @@ public class AppUserService {
         entity.setPhone(StringUtils.hasText(request.getPhone()) ? request.getPhone().trim() : null);
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         entity.setActive(true);
-        roleRepository.assignRoleIfPresent(entity, "ROLE_USER");
+        roleService.assignRole(entity, RoleName.ROLE_USER);
         toDtoWithOwner(repository.save(entity));
     }
 
@@ -69,7 +68,7 @@ public class AppUserService {
         AppUser entity = mapper.toEntity(request);
         entity.setUsername(username);
         entity.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        roleRepository.assignRoleIfPresent(entity, "ROLE_USER");
+        roleService.assignRole(entity, RoleName.ROLE_USER);
         return toDtoWithOwner(repository.save(entity));
     }
 
@@ -100,8 +99,7 @@ public class AppUserService {
         }
         if (request.getRoles() != null && currentUserService.isAdmin()) {
             Set<Role> newRoles = request.getRoles().stream()
-                    .map(roleRepository::findByName)
-                    .filter(Objects::nonNull)
+                    .map(roleService::requireRole)
                     .collect(Collectors.toSet());
             entity.setRoles(newRoles);
         }
@@ -162,7 +160,7 @@ public class AppUserService {
         entity.setPhone(StringUtils.hasText(phone) ? phone.trim() : null);
         entity.setPasswordHash(passwordEncoder.encode(password));
         entity.setActive(true);
-        roleRepository.assignRoleIfPresent(entity, "ROLE_USER");
+        roleService.assignRole(entity, RoleName.ROLE_USER);
         return repository.save(entity);
     }
 

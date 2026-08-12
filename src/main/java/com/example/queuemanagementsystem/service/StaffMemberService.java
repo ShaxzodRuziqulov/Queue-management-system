@@ -5,6 +5,7 @@ import com.example.queuemanagementsystem.domain.Business;
 import com.example.queuemanagementsystem.domain.OfferedService;
 import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.domain.enums.BookingStatus;
+import com.example.queuemanagementsystem.domain.enums.RoleName;
 import com.example.queuemanagementsystem.dto.BookingDto;
 import com.example.queuemanagementsystem.dto.StaffAccountUpdateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberCreateRequest;
@@ -19,7 +20,6 @@ import com.example.queuemanagementsystem.mapper.StaffMemberMapper;
 import com.example.queuemanagementsystem.repository.BookingRepository;
 import com.example.queuemanagementsystem.repository.OfferedServiceRepository;
 import com.example.queuemanagementsystem.repository.ReviewRepository;
-import com.example.queuemanagementsystem.repository.RoleRepository;
 import com.example.queuemanagementsystem.repository.StaffMemberRepository;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class StaffMemberService {
     private final BusinessService businessService;
     private final AppUserService userService;
     private final CurrentUserService currentUserService;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final BookingRepository bookingRepository;
     private final ReviewRepository reviewRepository;
     private final OfferedServiceRepository offeredServiceRepository;
@@ -56,7 +56,7 @@ public class StaffMemberService {
     @Transactional(readOnly = true)
     public List<StaffMemberDto> findByService(UUID businessId, UUID serviceId) {
         businessService.requireBusiness(businessId);
-        return repository.findActiveByBusinessIdAndServiceId(businessId, serviceId)
+        return repository.findDistinctByBusiness_IdAndOfferedServices_IdAndActiveTrue(businessId, serviceId)
                 .stream()
                 .map(this::toDtoWithStats)
                 .toList();
@@ -96,8 +96,8 @@ public class StaffMemberService {
                        + bookingRepository.countByStaff_IdAndStatus(staffId, BookingStatus.CONFIRMED);
         long cancelled = bookingRepository.countByStaff_IdAndStatus(staffId, BookingStatus.CANCELLED_BY_CUSTOMER)
                        + bookingRepository.countByStaff_IdAndStatus(staffId, BookingStatus.CANCELLED_BY_BUSINESS);
-        double avgRating  = reviewRepository.avgStarsByStaffId(staffId);
-        long reviewCount  = reviewRepository.findByStaff_Id(staffId).size();
+        double avgRating  = reviewRepository.calculateAverageStarsByStaffId(staffId);
+        long reviewCount  = reviewRepository.countByStaff_Id(staffId);
 
         return StaffStatsDto.builder()
                 .totalBookings(total)
@@ -292,11 +292,11 @@ public class StaffMemberService {
     }
 
     private void grantStaffRole(AppUser user) {
-        roleRepository.assignRoleIfPresent(user, "ROLE_STAFF");
+        roleService.assignRole(user, RoleName.ROLE_STAFF);
     }
 
     private void revokeStaffRole(AppUser user) {
-        roleRepository.removeRoleIfPresent(user, "ROLE_STAFF");
+        roleService.removeRole(user, RoleName.ROLE_STAFF);
     }
 
     private void applyServices(StaffMember entity, UUID businessId, Set<UUID> serviceIds) {
@@ -314,7 +314,7 @@ public class StaffMemberService {
     private StaffMemberDto toDtoWithStats(StaffMember entity) {
         StaffMemberDto dto = mapper.toDto(entity);
         UUID staffId = entity.getId();
-        dto.setAvgRating(reviewRepository.avgStarsByStaffId(staffId));
+        dto.setAvgRating(reviewRepository.calculateAverageStarsByStaffId(staffId));
         dto.setReviewCount(reviewRepository.countByStaff_Id(staffId));
         return dto;
     }

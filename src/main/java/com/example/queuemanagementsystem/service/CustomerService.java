@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -31,7 +32,7 @@ public class CustomerService {
     public Page<CustomerDto> findAll(UUID businessId, String search, Pageable pageable) {
         businessService.requireManagerOrAdmin(businessId);
         Page<Customer> page = StringUtils.hasText(search)
-                ? repository.search(businessId, search.trim(), pageable)
+                ? repository.search(businessId, search.trim().toLowerCase(Locale.ROOT), pageable)
                 : repository.findByBusiness_Id(businessId, pageable);
         return page.map(mapper::toDto);
     }

@@ -11,15 +11,7 @@ public interface StaffMemberRepository extends JpaRepository<StaffMember, UUID> 
 
     List<StaffMember> findByBusiness_Id(UUID businessId);
 
-    @org.springframework.data.jpa.repository.Query("""
-            select distinct s
-            from StaffMember s
-            join s.offeredServices service
-            where s.business.id = :businessId
-              and service.id = :serviceId
-              and s.active = true
-            """)
-    List<StaffMember> findActiveByBusinessIdAndServiceId(UUID businessId, UUID serviceId);
+    List<StaffMember> findDistinctByBusiness_IdAndOfferedServices_IdAndActiveTrue(UUID businessId, UUID serviceId);
 
     Optional<StaffMember> findByBusiness_IdAndId(UUID businessId, UUID id);
 

@@ -132,10 +132,22 @@ public class SecurityConfig {
                 .toList();
 
         boolean isWildcard = origins.contains("*");
+        List<String> originPatterns = origins.stream()
+                .filter(origin -> origin.contains("*"))
+                .toList();
+        List<String> exactOrigins = origins.stream()
+                .filter(origin -> !origin.contains("*"))
+                .toList();
+
         if (isWildcard) {
             configuration.setAllowedOriginPatterns(List.of("*"));
         } else {
-            configuration.setAllowedOrigins(origins);
+            if (!exactOrigins.isEmpty()) {
+                configuration.setAllowedOrigins(exactOrigins);
+            }
+            if (!originPatterns.isEmpty()) {
+                configuration.setAllowedOriginPatterns(originPatterns);
+            }
             configuration.setAllowCredentials(true);
         }
 

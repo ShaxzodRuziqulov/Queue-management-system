@@ -50,10 +50,4 @@ public class StaffMember extends BaseEntity {
     )
     private Set<OfferedService> offeredServices = new HashSet<>();
 
-    public String getFullName() {
-        String first = firstName == null ? "" : firstName.trim();
-        String last = lastName == null ? "" : lastName.trim();
-        String fullName = (first + " " + last).trim();
-        return fullName;
-    }
 }

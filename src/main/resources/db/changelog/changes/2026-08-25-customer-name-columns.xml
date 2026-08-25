@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-25-001-customers-add-first-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <not>
+                    <columnExists schemaName="public" tableName="customers" columnName="first_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="customers">
+            <column name="first_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-25-002-customers-add-last-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <not>
+                    <columnExists schemaName="public" tableName="customers" columnName="last_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="customers">
+            <column name="last_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-25-003-customers-add-middle-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <not>
+                    <columnExists schemaName="public" tableName="customers" columnName="middle_name"/>
+                </not>
+            </and>
+        </preConditions>
+        <addColumn schemaName="public" tableName="customers">
+            <column name="middle_name" type="varchar(120)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="2026-08-25-004-customers-backfill-from-full-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <columnExists schemaName="public" tableName="customers" columnName="first_name"/>
+                <columnExists schemaName="public" tableName="customers" columnName="last_name"/>
+                <columnExists schemaName="public" tableName="customers" columnName="middle_name"/>
+                <columnExists schemaName="public" tableName="customers" columnName="full_name"/>
+            </and>
+        </preConditions>
+        <sql>
+            UPDATE public.customers
+            SET first_name = COALESCE(NULLIF(trim(first_name), ''), NULLIF(split_part(trim(full_name), ' ', 1), ''), 'Mijoz'),
+                last_name = COALESCE(NULLIF(trim(last_name), ''), NULLIF(split_part(trim(full_name), ' ', 2), '')),
+                middle_name = COALESCE(
+                    NULLIF(trim(middle_name), ''),
+                    CASE
+                        WHEN array_length(regexp_split_to_array(trim(full_name), '\s+'), 1) > 2
+                        THEN NULLIF(trim(regexp_replace(trim(full_name), '^\S+\s+\S+\s*', '')), '')
+                        ELSE NULL
+                    END
+                )
+            WHERE first_name IS NULL OR trim(first_name) = '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="2026-08-25-005-customers-first-name-not-null" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <columnExists schemaName="public" tableName="customers" columnName="first_name"/>
+            </and>
+        </preConditions>
+        <addNotNullConstraint schemaName="public" tableName="customers" columnName="first_name" columnDataType="varchar(120)"/>
+    </changeSet>
+
+    <changeSet id="2026-08-25-006-customers-drop-full-name" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists schemaName="public" tableName="customers"/>
+                <columnExists schemaName="public" tableName="customers" columnName="full_name"/>
+            </and>
+        </preConditions>
+        <dropColumn schemaName="public" tableName="customers" columnName="full_name"/>
+    </changeSet>
+</databaseChangeLog>

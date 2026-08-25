@@ -11,7 +11,10 @@ import java.util.UUID;
 public class CustomerDto {
     private UUID id;
     private UUID businessId;
-    private String fullName;
+    private UUID appUserId;
+    private String firstName;
+    private String lastName;
+    private String middleName;
     private String phone;
     private String email;
     private String note;

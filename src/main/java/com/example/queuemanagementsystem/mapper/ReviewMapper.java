@@ -12,8 +12,10 @@ public interface ReviewMapper extends EntityMapper<ReviewDto, Review> {
     @Mapping(target = "bookingId",  source = "booking.id")
     @Mapping(target = "businessId", source = "booking.business.id")
     @Mapping(target = "staffId",    source = "staff.id")
-    @Mapping(target = "staffName",  source = "staff.fullName")
-    @Mapping(target = "customerName", source = "booking.customer.fullName")
+    @Mapping(target = "staffFirstName",  source = "staff.firstName")
+    @Mapping(target = "staffLastName",  source = "staff.lastName")
+    @Mapping(target = "customerFirstName", source = "booking.customer.firstName")
+    @Mapping(target = "customerLastName", source = "booking.customer.lastName")
     ReviewDto toDto(Review entity);
 
     @Mapping(target = "id",        ignore = true)

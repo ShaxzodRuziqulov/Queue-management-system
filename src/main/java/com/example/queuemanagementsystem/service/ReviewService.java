@@ -53,9 +53,13 @@ public class ReviewService {
 
     public ReviewDto create(ReviewCreateRequest request) {
         Booking booking = bookingService.requireBooking(request.getBookingId());
-        boolean isBookingCustomer = booking.getCustomer() != null
-                && booking.getCustomer().getId().equals(currentUserService.getCurrentUserId());
-        if (!currentUserService.isAdmin() && !isBookingCustomer) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        boolean isBookingCustomer = booking.getCustomerAccount() != null
+                && booking.getCustomerAccount().getId().equals(currentUserId);
+        boolean isLinkedCustomerAccount = booking.getCustomer() != null
+                && booking.getCustomer().getAppUser() != null
+                && booking.getCustomer().getAppUser().getId().equals(currentUserId);
+        if (!currentUserService.isAdmin() && !isBookingCustomer && !isLinkedCustomerAccount) {
             throw new AccessDeniedException("Faqat o'z bronigiz uchun sharh qoldira olasiz");
         }
         if (booking.getStatus() != com.example.queuemanagementsystem.domain.enums.BookingStatus.COMPLETED) {
@@ -91,8 +95,13 @@ public class ReviewService {
     private void requireReviewerOrAdmin(Review review) {
         if (currentUserService.isAdmin()) return;
         UUID currentId = currentUserService.getCurrentUserId();
+        var customerAccount = review.getBooking().getCustomerAccount();
         var customer = review.getBooking().getCustomer();
-        if (customer == null || !customer.getId().equals(currentId)) {
+        boolean isBookingCustomer = customerAccount != null && customerAccount.getId().equals(currentId);
+        boolean isLinkedCustomerAccount = customer != null
+                && customer.getAppUser() != null
+                && customer.getAppUser().getId().equals(currentId);
+        if (!isBookingCustomer && !isLinkedCustomerAccount) {
             throw new AccessDeniedException("Bu sharhga ruxsat yo'q");
         }
     }

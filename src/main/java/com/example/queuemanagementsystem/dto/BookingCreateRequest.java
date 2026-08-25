@@ -11,15 +11,21 @@ import java.util.UUID;
 @Data
 public class BookingCreateRequest {
 
-    /** Ro'yxatdan o'tgan mijoz uchun (hozircha ishlatilmaydi — kelajakdagi mijoz ilovasi uchun). */
+    /** Biznes mijozlar bazasidagi mavjud mijoz. */
     private UUID customerId;
 
-    /** Hisobsiz (mehmon) mijoz ismi — customerId berilmagan bo'lsa majburiy. */
-    @Size(max = 200)
-    private String guestName;
+    /** Yangi mijoz yaratish/topish uchun ma'lumotlar (customerId berilmasa). */
+    @Size(max = 120)
+    private String customerFirstName;
+
+    @Size(max = 120)
+    private String customerLastName;
+
+    @Size(max = 120)
+    private String customerMiddleName;
 
     @Size(max = 32)
-    private String guestPhone;
+    private String customerPhone;
 
     @NotNull
     private UUID businessId;

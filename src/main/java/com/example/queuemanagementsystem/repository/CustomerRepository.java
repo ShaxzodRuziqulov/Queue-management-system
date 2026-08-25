@@ -18,9 +18,13 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     Optional<Customer> findByBusiness_IdAndPhone(UUID businessId, String phone);
 
+    Optional<Customer> findByBusiness_IdAndAppUser_Id(UUID businessId, UUID appUserId);
+
     /** Ism yoki telefon bo'yicha qidiruv (bitta biznes ichida). */
     @Query("select c from Customer c where c.business.id = :businessId and (" +
-            "lower(c.fullName) like concat('%', :q, '%') or " +
+            "lower(coalesce(c.firstName, '')) like concat('%', :q, '%') or " +
+            "lower(coalesce(c.lastName, '')) like concat('%', :q, '%') or " +
+            "lower(coalesce(c.middleName, '')) like concat('%', :q, '%') or " +
             "c.phone like concat('%', :q, '%'))")
     Page<Customer> search(@Param("businessId") UUID businessId, @Param("q") String q, Pageable pageable);
 }

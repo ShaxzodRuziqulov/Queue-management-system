@@ -9,8 +9,14 @@ import lombok.Data;
 public class CustomerCreateRequest {
 
     @NotBlank
-    @Size(max = 200)
-    private String fullName;
+    @Size(max = 120)
+    private String firstName;
+
+    @Size(max = 120)
+    private String lastName;
+
+    @Size(max = 120)
+    private String middleName;
 
     @Size(max = 32)
     private String phone;

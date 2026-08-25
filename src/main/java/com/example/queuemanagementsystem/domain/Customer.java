@@ -14,9 +14,8 @@ import java.time.Instant;
 
 /**
  * Biznesning o'z mijozlar bazasi. Har bir yozuv bitta biznesga tegishli va
- * telefon raqami bo'yicha takrorlanmaydi (biznes ichida). Bron yaratilganda
- * {@code guestPhone} bo'yicha avtomatik topiladi yoki yaratiladi
- * ({@link com.example.queuemanagementsystem.service.CustomerService#upsertFromBooking}).
+ * telefon raqami bo'yicha takrorlanmaydi (biznes ichida). Tizimdagi account
+ * keyinroq paydo bo'lsa ham, telefon yoki account orqali shu mijozga ulanadi.
  */
 @Entity
 @Table(name = "customers", indexes = {
@@ -31,8 +30,18 @@ public class Customer extends BaseEntity {
     @JoinColumn(name = "business_id", nullable = false)
     private Business business;
 
-    @Column(nullable = false, length = 200)
-    private String fullName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "app_user_id")
+    private AppUser appUser;
+
+    @Column(nullable = false, length = 120)
+    private String firstName;
+
+    @Column(length = 120)
+    private String lastName;
+
+    @Column(length = 120)
+    private String middleName;
 
     /** Biznes ichida dedup kaliti — bo'sh bo'lishi mumkin (qo'lda kiritilgan mijoz uchun). */
     @Column(length = 32)

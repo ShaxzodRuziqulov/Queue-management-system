@@ -17,13 +17,24 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     Page<Booking> findByCustomer_Id(UUID customerId, Pageable pageable);
 
+    @Query("""
+            SELECT b
+            FROM Booking b
+            LEFT JOIN b.customer customer
+            LEFT JOIN b.customerAccount customerAccount
+            WHERE customerAccount.id = :customerAccountId
+               OR customer.appUser.id = :customerAccountId
+            """)
+    Page<Booking> findByCustomerAccountOrLinkedCustomer(
+            @Param("customerAccountId") UUID customerAccountId,
+            Pageable pageable);
+
     Page<Booking> findByBusiness_Id(UUID businessId, Pageable pageable);
 
     @Query("""
             SELECT b
             FROM Booking b
             LEFT JOIN b.customer customer
-            LEFT JOIN b.client client
             LEFT JOIN b.offeredService offeredService
             LEFT JOIN b.staff staff
             WHERE b.business.id = :businessId
@@ -32,17 +43,14 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
               AND b.startAt < :dayEnd
               AND (
                 :q = '' OR
-                LOWER(COALESCE(b.guestName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(b.guestPhone, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.customerNote, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(client.fullName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(client.phone, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(offeredService.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(staff.firstName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(staff.lastName, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(customer.firstName, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(customer.lastName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(customer.username, '')) LIKE CONCAT('%', :q, '%')
+                LOWER(COALESCE(customer.middleName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(customer.phone, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(offeredService.name, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.lastName, '')) LIKE CONCAT('%', :q, '%')
               )
             """)
     Page<Booking> searchByBusinessAndStatus(
@@ -57,7 +65,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             SELECT b
             FROM Booking b
             LEFT JOIN b.customer customer
-            LEFT JOIN b.client client
             LEFT JOIN b.offeredService offeredService
             LEFT JOIN b.staff staff
             WHERE b.business.id = :businessId
@@ -65,17 +72,14 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
               AND b.startAt < :dayEnd
               AND (
                 :q = '' OR
-                LOWER(COALESCE(b.guestName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(b.guestPhone, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.customerNote, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(client.fullName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(client.phone, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(offeredService.name, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(staff.firstName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(staff.lastName, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(customer.firstName, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(customer.lastName, '')) LIKE CONCAT('%', :q, '%') OR
-                LOWER(COALESCE(customer.username, '')) LIKE CONCAT('%', :q, '%')
+                LOWER(COALESCE(customer.middleName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(customer.phone, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(offeredService.name, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(staff.lastName, '')) LIKE CONCAT('%', :q, '%')
               )
             """)
     Page<Booking> searchByBusiness(

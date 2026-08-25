@@ -30,22 +30,15 @@ import java.util.UUID;
 @ToString(onlyExplicitlyIncluded = true)
 public class Booking extends BaseEntity{
 
-    /**
-     * Ro'yxatdan o'tgan mijoz hisobi — hozircha ishlatilmaydi (mijoz ilovasi alohida loyiha
-     * sifatida rejalashtirilgan, keyinchalik ulanadi). Bron odatda {@link #guestName} orqali
-     * xodim/biznes egasi tomonidan kiritiladi.
-     */
+    /** Booking bog'langan biznes mijoz profili. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
-    private AppUser customer;
+    private Customer customer;
 
-    /** Hisobsiz (mehmon) mijozning ismi — customer bog'lanmagan bronlar uchun majburiy. */
-    @Column(name = "guest_name", length = 200)
-    private String guestName;
-
-    /** Hisobsiz mijozning telefon raqami (ixtiyoriy). */
-    @Column(name = "guest_phone", length = 32)
-    private String guestPhone;
+    /** Ro'yxatdan o'tgan foydalanuvchi hisobi, agar booking client app orqali yaratilgan bo'lsa. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_account_id")
+    private AppUser customerAccount;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "business_id", nullable = false)
@@ -58,16 +51,6 @@ public class Booking extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "staff_id")
     private StaffMember staff;
-
-    /**
-     * Biznesning mijozlar bazasidagi yozuv. Bron yaratilganda {@link #guestPhone}
-     * bo'yicha avtomatik topiladi yoki yaratiladi (telefon bo'lmasa — null).
-     * Yuqoridagi {@link #customer} dan farqli — bu biznesga tegishli mijoz profili,
-     * {@link #customer} esa kelajakdagi mijoz ilovasining tizim hisobi.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_customer_id")
-    private Customer client;
 
     @Column(nullable = false)
     private Instant startAt;

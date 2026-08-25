@@ -10,10 +10,12 @@ import org.mapstruct.*;
 public interface CustomerMapper extends EntityMapper<CustomerDto, Customer> {
 
     @Mapping(target = "businessId", source = "business.id")
+    @Mapping(target = "appUserId", source = "appUser.id")
     CustomerDto toDto(Customer entity);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
+    @Mapping(target = "appUser", ignore = true)
     @Mapping(target = "visitCount", ignore = true)
     @Mapping(target = "lastVisitAt", ignore = true)
     @Mapping(target = "active", ignore = true)
@@ -24,6 +26,7 @@ public interface CustomerMapper extends EntityMapper<CustomerDto, Customer> {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "business", ignore = true)
+    @Mapping(target = "appUser", ignore = true)
     @Mapping(target = "visitCount", ignore = true)
     @Mapping(target = "lastVisitAt", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

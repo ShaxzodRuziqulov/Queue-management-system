@@ -52,14 +52,7 @@ public class AppUser extends BaseEntity {
     @OneToMany(mappedBy = "owner")
     private Set<Business> ownedBusinesses = new HashSet<>();
 
-    @OneToMany(mappedBy = "customer")
+    @OneToMany(mappedBy = "customerAccount")
     private Set<Booking> bookings = new HashSet<>();
-
-    public String getFullName() {
-        String first = firstName == null ? "" : firstName.trim();
-        String last = lastName == null ? "" : lastName.trim();
-        String fullName = (first + " " + last).trim();
-        return fullName.isEmpty() ? username : fullName;
-    }
 
 }

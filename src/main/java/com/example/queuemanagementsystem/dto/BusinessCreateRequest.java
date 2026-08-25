@@ -1,6 +1,8 @@
 package com.example.queuemanagementsystem.dto;
 
 import com.example.queuemanagementsystem.domain.enums.BusinessCategory;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -27,7 +29,12 @@ public class BusinessCreateRequest {
     @Size(max = 120)
     private String city;
 
+    @DecimalMin("-90.0")
+    @DecimalMax("90.0")
     private BigDecimal latitude;
+
+    @DecimalMin("-180.0")
+    @DecimalMax("180.0")
     private BigDecimal longitude;
 
     @Size(max = 32)

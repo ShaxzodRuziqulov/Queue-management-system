@@ -13,6 +13,4 @@ public class BookingUpdateRequest {
     private Instant endAt;
     private BookingStatus status;
     private String customerNote;
-    private String guestName;
-    private String guestPhone;
 }

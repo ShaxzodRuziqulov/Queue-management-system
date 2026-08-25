@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="2026-08-25-101-customers-app-user-link" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="public" tableName="customers"/>
+            <not>
+                <columnExists schemaName="public" tableName="customers" columnName="app_user_id"/>
+            </not>
+        </preConditions>
+        <addColumn schemaName="public" tableName="customers">
+            <column name="app_user_id" type="uuid"/>
+        </addColumn>
+        <createIndex schemaName="public" tableName="customers" indexName="idx_customers_app_user_id">
+            <column name="app_user_id"/>
+        </createIndex>
+        <addForeignKeyConstraint
+                constraintName="fk_customers_app_user"
+                baseTableSchemaName="public"
+                baseTableName="customers"
+                baseColumnNames="app_user_id"
+                referencedTableSchemaName="public"
+                referencedTableName="app_users"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="2026-08-25-102-bookings-customer-model" author="codex" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <tableExists schemaName="public" tableName="bookings"/>
+            <tableExists schemaName="public" tableName="customers"/>
+        </preConditions>
+        <sql splitStatements="false"><![CDATA[
+            CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+            ALTER TABLE public.bookings
+                ADD COLUMN IF NOT EXISTS customer_account_id uuid;
+
+            UPDATE public.bookings b
+            SET customer_account_id = b.customer_id
+            WHERE b.customer_account_id IS NULL
+              AND b.customer_id IS NOT NULL
+              AND EXISTS (
+                  SELECT 1 FROM public.app_users u WHERE u.id = b.customer_id
+              );
+
+            INSERT INTO public.customers (
+                id, created_at, updated_at, business_id, first_name, phone,
+                visit_count, last_visit_at, active
+            )
+            SELECT
+                gen_random_uuid(),
+                now(),
+                now(),
+                b.business_id,
+                COALESCE(NULLIF(MAX(TRIM(b.guest_name)), ''), 'Noma''lum mijoz'),
+                NULLIF(TRIM(b.guest_phone), ''),
+                COUNT(*),
+                MAX(b.start_at),
+                true
+            FROM public.bookings b
+            WHERE b.client_customer_id IS NULL
+              AND NULLIF(TRIM(COALESCE(b.guest_phone, '')), '') IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM public.customers c
+                  WHERE c.business_id = b.business_id
+                    AND c.phone = NULLIF(TRIM(b.guest_phone), '')
+              )
+            GROUP BY b.business_id, NULLIF(TRIM(b.guest_phone), '');
+
+            UPDATE public.bookings b
+            SET client_customer_id = c.id
+            FROM public.customers c
+            WHERE b.client_customer_id IS NULL
+              AND NULLIF(TRIM(COALESCE(b.guest_phone, '')), '') IS NOT NULL
+              AND c.business_id = b.business_id
+              AND c.phone = NULLIF(TRIM(b.guest_phone), '');
+
+            WITH source AS (
+                SELECT b.id AS booking_id,
+                       b.business_id,
+                       COALESCE(NULLIF(TRIM(b.guest_name), ''), 'Noma''lum mijoz') AS first_name,
+                       b.start_at
+                FROM public.bookings b
+                WHERE b.client_customer_id IS NULL
+                  AND NULLIF(TRIM(COALESCE(b.guest_phone, '')), '') IS NULL
+                  AND NULLIF(TRIM(COALESCE(b.guest_name, '')), '') IS NOT NULL
+            ),
+            inserted AS (
+                INSERT INTO public.customers (
+                    id, created_at, updated_at, business_id, first_name,
+                    note, visit_count, last_visit_at, active
+                )
+                SELECT
+                    gen_random_uuid(),
+                    now(),
+                    now(),
+                    s.business_id,
+                    s.first_name,
+                    'migration:booking:' || s.booking_id::text,
+                    1,
+                    s.start_at,
+                    true
+                FROM source s
+                RETURNING id, note
+            )
+            UPDATE public.bookings b
+            SET client_customer_id = i.id
+            FROM inserted i
+            WHERE i.note = 'migration:booking:' || b.id::text;
+
+            UPDATE public.customers
+            SET note = NULL
+            WHERE note LIKE 'migration:booking:%';
+
+            UPDATE public.customers c
+            SET app_user_id = b.customer_account_id
+            FROM public.bookings b
+            WHERE b.client_customer_id = c.id
+              AND c.app_user_id IS NULL
+              AND b.customer_account_id IS NOT NULL;
+
+            DO $$
+            DECLARE
+                constraint_name text;
+            BEGIN
+                FOR constraint_name IN
+                    SELECT tc.constraint_name
+                    FROM information_schema.table_constraints tc
+                    JOIN information_schema.key_column_usage kcu
+                      ON tc.constraint_name = kcu.constraint_name
+                     AND tc.table_schema = kcu.table_schema
+                    WHERE tc.table_schema = 'public'
+                      AND tc.table_name = 'bookings'
+                      AND tc.constraint_type = 'FOREIGN KEY'
+                      AND kcu.column_name IN ('customer_id', 'client_customer_id')
+                LOOP
+                    EXECUTE format('ALTER TABLE public.bookings DROP CONSTRAINT IF EXISTS %I', constraint_name);
+                END LOOP;
+            END $$;
+
+            ALTER TABLE public.bookings DROP COLUMN IF EXISTS customer_id;
+            ALTER TABLE public.bookings RENAME COLUMN client_customer_id TO customer_id;
+            ALTER TABLE public.bookings DROP COLUMN IF EXISTS guest_name;
+            ALTER TABLE public.bookings DROP COLUMN IF EXISTS guest_phone;
+
+            ALTER TABLE public.bookings
+                ADD CONSTRAINT fk_bookings_customer
+                FOREIGN KEY (customer_id) REFERENCES public.customers(id);
+
+            ALTER TABLE public.bookings
+                ADD CONSTRAINT fk_bookings_customer_account
+                FOREIGN KEY (customer_account_id) REFERENCES public.app_users(id);
+        ]]></sql>
+    </changeSet>
+</databaseChangeLog>

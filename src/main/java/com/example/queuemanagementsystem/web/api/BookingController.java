@@ -31,12 +31,13 @@ public class BookingController {
     @GetMapping
     public ResponseEntity<Page<BookingDto>> list(
             @RequestParam(required = false) UUID customerId,
+            @RequestParam(required = false) UUID customerAccountId,
             @RequestParam(required = false) UUID businessId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) BookingStatus status,
             @RequestParam(required = false) String q,
             @PageableDefault(size = 20, sort = "startAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(customerId, businessId, date, status, q, pageable));
+        return ResponseEntity.ok(service.findAll(customerId, customerAccountId, businessId, date, status, q, pageable));
     }
 
     @GetMapping("/availability")

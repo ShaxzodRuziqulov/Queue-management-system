@@ -10,4 +10,6 @@
     <include file="db/changelog/changes/2026-08-06-business-category.xml"/>
     <include file="db/changelog/changes/2026-08-06-business-category-backfill.xml"/>
     <include file="db/changelog/changes/2026-08-10-password_reset_code.xml"/>
+    <include file="db/changelog/changes/2026-08-25-customer-name-columns.xml"/>
+    <include file="db/changelog/changes/2026-08-25-bookings-customer-model.xml"/>
 </databaseChangeLog>

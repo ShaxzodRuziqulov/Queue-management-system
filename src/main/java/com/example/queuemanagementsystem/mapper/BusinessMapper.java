@@ -14,6 +14,10 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface BusinessMapper extends EntityMapper<BusinessDto, Business> {
 
     @Mapping(target = "ownerId", source = "owner.id")
+    @Mapping(target = "ownerLogin", source = "owner.username")
+    @Mapping(target = "ownerFirstName", source = "owner.firstName")
+    @Mapping(target = "ownerLastName", source = "owner.lastName")
+    @Mapping(target = "ownerPhone", source = "owner.phone")
     @Mapping(target = "accessAllowed", expression = "java(entity.isAccessAllowed())")
     @Mapping(target = "reviewNote", source = "reviewNote")
     @Mapping(target = "reviewedBy", source = "reviewedBy")

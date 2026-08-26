@@ -14,6 +14,7 @@ public class AuditLogDto {
     private String action;
     private String entityType;
     private String entityId;
+    private String entityName;
     private String details;
     private Instant createdAt;
 }

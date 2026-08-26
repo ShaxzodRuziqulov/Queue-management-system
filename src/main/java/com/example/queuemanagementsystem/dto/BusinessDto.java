@@ -14,6 +14,10 @@ import java.util.UUID;
 public class BusinessDto {
     private UUID id;
     private UUID ownerId;
+    private String ownerLogin;
+    private String ownerFirstName;
+    private String ownerLastName;
+    private String ownerPhone;
     private String name;
     private String description;
     private String addressLine;

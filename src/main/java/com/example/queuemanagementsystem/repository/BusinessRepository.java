@@ -53,6 +53,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os
@@ -87,6 +91,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os
@@ -113,6 +121,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os
@@ -147,6 +159,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os
@@ -173,6 +189,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os
@@ -390,6 +410,10 @@ public interface BusinessRepository extends JpaRepository<Business, UUID> {
                 LOWER(COALESCE(b.description, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.addressLine, '')) LIKE CONCAT('%', :q, '%') OR
                 LOWER(COALESCE(b.city, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.firstName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.lastName, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.username, '')) LIKE CONCAT('%', :q, '%') OR
+                LOWER(COALESCE(b.owner.phone, '')) LIKE CONCAT('%', :q, '%') OR
                 EXISTS (
                   SELECT 1
                   FROM OfferedService os

@@ -4,6 +4,7 @@ import com.example.queuemanagementsystem.domain.Customer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,6 +14,14 @@ import java.util.UUID;
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     Page<Customer> findByBusiness_Id(UUID businessId, Pageable pageable);
+
+    @Modifying
+    @Query("DELETE FROM Customer c WHERE c.business.id = :businessId")
+    int deleteByBusinessId(@Param("businessId") UUID businessId);
+
+    @Modifying
+    @Query("UPDATE Customer c SET c.appUser = null WHERE c.appUser.id = :userId")
+    int clearAppUser(@Param("userId") UUID userId);
 
     Optional<Customer> findByBusiness_IdAndId(UUID businessId, UUID id);
 

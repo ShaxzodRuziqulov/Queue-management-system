@@ -5,6 +5,7 @@ import com.example.queuemanagementsystem.domain.enums.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,6 +31,14 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             Pageable pageable);
 
     Page<Booking> findByBusiness_Id(UUID businessId, Pageable pageable);
+
+    @Modifying
+    @Query("DELETE FROM Booking b WHERE b.business.id = :businessId")
+    void deleteByBusinessId(@Param("businessId") UUID businessId);
+
+    @Modifying
+    @Query("UPDATE Booking b SET b.customerAccount = null WHERE b.customerAccount.id = :userId")
+    void clearCustomerAccount(@Param("userId") UUID userId);
 
     @Query("""
             SELECT b

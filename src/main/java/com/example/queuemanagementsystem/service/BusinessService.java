@@ -47,6 +47,7 @@ public class BusinessService {
     private final AuditLogService auditLogService;
     private final StaffMemberRepository staffMemberRepository;
     private final RoleService roleService;
+    private final BusinessDeletionService businessDeletionService;
 
     @Transactional(readOnly = true)
     public Page<BusinessDto> findAll(UUID ownerId, BusinessCategory category, BusinessStatus status, String city, String q, Pageable pageable) {
@@ -225,9 +226,10 @@ public class BusinessService {
     public void delete(UUID id) {
         Business entity = requireBusiness(id);
         requireOwnerOrAdmin(entity);
-        repository.deleteById(id);
+        String businessName = entity.getName();
+        businessDeletionService.deleteById(id);
         auditLogService.log(AuditAction.BUSINESS_DELETED, "BUSINESS", id.toString(),
-                "Biznes o'chirildi: " + entity.getName());
+                "Biznes o'chirildi: " + businessName);
     }
 
     Business requireBusiness(UUID id) {

@@ -17,6 +17,12 @@ import java.util.UUID;
 
 public interface BusinessRepository extends JpaRepository<Business, UUID> {
 
+    List<Business> findByOwner_Id(UUID ownerId);
+
+    @Modifying
+    @Query("DELETE FROM Business b WHERE b.id = :businessId")
+    int deleteByBusinessId(@Param("businessId") UUID businessId);
+
     @Query("""
             SELECT DISTINCT b.city
             FROM Business b

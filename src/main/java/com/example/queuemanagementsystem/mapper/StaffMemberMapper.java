@@ -1,5 +1,6 @@
 package com.example.queuemanagementsystem.mapper;
 
+import com.example.queuemanagementsystem.domain.BaseEntity;
 import com.example.queuemanagementsystem.domain.StaffMember;
 import com.example.queuemanagementsystem.dto.StaffMemberCreateRequest;
 import com.example.queuemanagementsystem.dto.StaffMemberDto;
@@ -15,17 +16,30 @@ public interface StaffMemberMapper extends EntityMapper<StaffMemberDto, StaffMem
 
     @Mapping(target = "businessId", source = "business.id")
     @Mapping(target = "linkedUserId", source = "linkedUser.id")
+    @Mapping(target = "avatarUrl", expression = "java(resolveAvatarUrl(entity))")
     @Mapping(target = "serviceIds", expression = "java(toServiceIds(entity))")
     @Mapping(target = "avgRating", ignore = true)
     @Mapping(target = "reviewCount", ignore = true)
     StaffMemberDto toDto(StaffMember entity);
+
+    default String resolveAvatarUrl(StaffMember entity) {
+        if (entity.getAvatarUrl() != null && !entity.getAvatarUrl().isBlank()) {
+            return entity.getAvatarUrl();
+        }
+        if (entity.getLinkedUser() != null
+                && entity.getLinkedUser().getAvatarUrl() != null
+                && !entity.getLinkedUser().getAvatarUrl().isBlank()) {
+            return entity.getLinkedUser().getAvatarUrl();
+        }
+        return null;
+    }
 
     default Set<UUID> toServiceIds(StaffMember entity) {
         if (entity.getOfferedServices() == null) {
             return Set.of();
         }
         return entity.getOfferedServices().stream()
-                .map(service -> service.getId())
+                .map(BaseEntity::getId)
                 .collect(Collectors.toSet());
     }
 

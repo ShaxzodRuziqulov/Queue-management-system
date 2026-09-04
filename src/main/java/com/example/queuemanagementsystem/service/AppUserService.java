@@ -1,6 +1,7 @@
 package com.example.queuemanagementsystem.service;
 
 import com.example.queuemanagementsystem.domain.AppUser;
+import com.example.queuemanagementsystem.domain.Business;
 import com.example.queuemanagementsystem.domain.Role;
 import com.example.queuemanagementsystem.domain.enums.AuditAction;
 import com.example.queuemanagementsystem.domain.enums.RoleName;
@@ -9,7 +10,11 @@ import com.example.queuemanagementsystem.dto.auth.RegisterRequest;
 import com.example.queuemanagementsystem.exception.ResourceNotFoundException;
 import com.example.queuemanagementsystem.mapper.AppUserMapper;
 import com.example.queuemanagementsystem.repository.AppUserRepository;
+import com.example.queuemanagementsystem.repository.BookingRepository;
 import com.example.queuemanagementsystem.repository.BusinessRepository;
+import com.example.queuemanagementsystem.repository.CustomerRepository;
+import com.example.queuemanagementsystem.repository.PasswordResetCodeRepository;
+import com.example.queuemanagementsystem.repository.StaffMemberRepository;
 import com.example.queuemanagementsystem.security.AppUserDetailsService;
 import com.example.queuemanagementsystem.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +43,11 @@ public class AppUserService {
     private final FileStorageService fileStorageService;
     private final AuditLogService auditLogService;
     private final RoleService roleService;
+    private final BusinessDeletionService businessDeletionService;
+    private final BookingRepository bookingRepository;
+    private final CustomerRepository customerRepository;
+    private final StaffMemberRepository staffMemberRepository;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
 
     @Transactional(readOnly = true)
     public List<AppUserDto> findAll() {
@@ -134,8 +144,25 @@ public class AppUserService {
 
     public void delete(UUID id) {
         AppUser entity = requireUser(id);
-        repository.deleteById(id);
-        auditLogService.log(AuditAction.USER_DELETED, "USER", id.toString(), entity.getUsername());
+        String username = entity.getUsername();
+        String avatarUrl = entity.getAvatarUrl();
+
+        List<UUID> ownedBusinessIds = businessRepository.findByOwner_Id(id).stream()
+                .map(Business::getId)
+                .toList();
+        ownedBusinessIds.forEach(businessDeletionService::deleteById);
+        entity = requireUser(id);
+        bookingRepository.clearCustomerAccount(id);
+        customerRepository.clearAppUser(id);
+        staffMemberRepository.clearLinkedUser(id);
+        passwordResetCodeRepository.deleteByUserId(id);
+
+        entity.getRoles().clear();
+        repository.delete(entity);
+        repository.flush();
+        fileStorageService.delete(avatarUrl);
+
+        auditLogService.log(AuditAction.USER_DELETED, "USER", id.toString(), username);
     }
 
     public AppUser requireUser(UUID id) {

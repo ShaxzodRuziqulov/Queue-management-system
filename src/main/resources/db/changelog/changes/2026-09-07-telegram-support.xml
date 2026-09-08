@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="2026-09-07-001-telegram-support" author="codex">
+        <addColumn tableName="app_users">
+            <column name="telegram_chat_id" type="bigint"/>
+        </addColumn>
+        <addUniqueConstraint tableName="app_users" columnNames="telegram_chat_id" constraintName="uk_app_users_telegram_chat_id"/>
+        <createTable tableName="telegram_link_token">
+            <column name="id" type="uuid"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="token" type="varchar(64)"><constraints nullable="false" unique="true"/></column>
+            <column name="user_id" type="uuid"><constraints nullable="false"/></column>
+            <column name="expires_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column>
+            <column name="created_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column>
+            <column name="updated_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="telegram_link_token" baseColumnNames="user_id" constraintName="fk_telegram_link_token_user" referencedTableName="app_users" referencedColumnNames="id" onDelete="CASCADE"/>
+        <createIndex tableName="telegram_link_token" indexName="idx_telegram_link_token_user"><column name="user_id"/></createIndex>
+    </changeSet>
+</databaseChangeLog>

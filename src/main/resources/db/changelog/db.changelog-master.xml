@@ -12,4 +12,7 @@
     <include file="db/changelog/changes/2026-08-10-password_reset_code.xml"/>
     <include file="db/changelog/changes/2026-08-25-customer-name-columns.xml"/>
     <include file="db/changelog/changes/2026-08-25-bookings-customer-model.xml"/>
+    <include file="db/changelog/changes/2026-09-07-telegram-support.xml"/>
+    <include file="db/changelog/changes/2026-09-07-support-tickets.xml"/>
+    <include file="db/changelog/changes/2026-09-08-support-source.xml"/>
 </databaseChangeLog>

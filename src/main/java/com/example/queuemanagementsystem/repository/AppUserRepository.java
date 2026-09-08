@@ -15,6 +15,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
 
     boolean existsByUsername(String username);
 
+    Optional<AppUser> findByTelegramChatId(Long telegramChatId);
+
     @Query("SELECT u FROM AppUser u LEFT JOIN FETCH u.roles WHERE u.username = :username")
     Optional<AppUser> findWithRolesByUsername(@Param("username") String username);
 

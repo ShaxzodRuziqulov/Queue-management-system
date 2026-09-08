@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+  <changeSet id="2026-09-07-002-support-tickets" author="codex">
+    <createTable tableName="support_tickets">
+      <column name="id" type="uuid"><constraints primaryKey="true" nullable="false"/></column><column name="requester_id" type="uuid"/><column name="telegram_chat_id" type="bigint"><constraints nullable="false"/></column><column name="requester_name" type="varchar(160)"/><column name="subject" type="varchar(200)"><constraints nullable="false"/></column><column name="status" type="varchar(30)"><constraints nullable="false"/></column><column name="priority" type="varchar(20)"><constraints nullable="false"/></column><column name="created_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column><column name="updated_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <createTable tableName="support_messages">
+      <column name="id" type="uuid"><constraints primaryKey="true" nullable="false"/></column><column name="ticket_id" type="uuid"><constraints nullable="false"/></column><column name="sender" type="varchar(20)"><constraints nullable="false"/></column><column name="content" type="text"><constraints nullable="false"/></column><column name="media_type" type="varchar(30)"/><column name="telegram_message_id" type="bigint"/><column name="created_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column><column name="updated_at" type="timestamp(6) with time zone"><constraints nullable="false"/></column>
+    </createTable>
+    <addForeignKeyConstraint baseTableName="support_tickets" baseColumnNames="requester_id" constraintName="fk_support_ticket_user" referencedTableName="app_users" referencedColumnNames="id" onDelete="SET NULL"/>
+    <addForeignKeyConstraint baseTableName="support_messages" baseColumnNames="ticket_id" constraintName="fk_support_message_ticket" referencedTableName="support_tickets" referencedColumnNames="id" onDelete="CASCADE"/>
+    <createIndex tableName="support_tickets" indexName="idx_support_tickets_status_updated"><column name="status"/><column name="updated_at"/></createIndex><createIndex tableName="support_messages" indexName="idx_support_messages_ticket_created"><column name="ticket_id"/><column name="created_at"/></createIndex>
+  </changeSet>
+</databaseChangeLog>

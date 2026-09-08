@@ -23,6 +23,8 @@ public interface AppUserMapper extends EntityMapper<AppUserDto, AppUser> {
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "ownedBusinesses", ignore = true)
     @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "telegramChatId", ignore = true)
+    @Mapping(target = "telegramSupportSource", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     AppUser toEntity(AppUserCreateRequest request);
@@ -34,6 +36,8 @@ public interface AppUserMapper extends EntityMapper<AppUserDto, AppUser> {
     @Mapping(target = "roles", ignore = true)
     @Mapping(target = "ownedBusinesses", ignore = true)
     @Mapping(target = "bookings", ignore = true)
+    @Mapping(target = "telegramChatId", ignore = true)
+    @Mapping(target = "telegramSupportSource", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void update(@MappingTarget AppUser entity, AppUserUpdateRequest request);

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="2026-09-08-001-support-source" author="codex">
+        <addColumn tableName="app_users"><column name="telegram_support_source" type="varchar(30)" defaultValue="GENERAL"><constraints nullable="false"/></column></addColumn>
+        <addColumn tableName="telegram_link_token"><column name="source" type="varchar(30)" defaultValue="GENERAL"><constraints nullable="false"/></column></addColumn>
+        <addColumn tableName="support_tickets"><column name="source" type="varchar(30)" defaultValue="GENERAL"><constraints nullable="false"/></column></addColumn>
+        <createIndex tableName="support_tickets" indexName="idx_support_tickets_chat_source"><column name="telegram_chat_id"/><column name="source"/><column name="updated_at"/></createIndex>
+    </changeSet>
+</databaseChangeLog>

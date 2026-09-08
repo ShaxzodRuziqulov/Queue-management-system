@@ -1,6 +1,7 @@
 package com.example.queuemanagementsystem.domain;
 
 import jakarta.persistence.*;
+import com.example.queuemanagementsystem.domain.enums.SupportSource;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,6 +34,15 @@ public class AppUser extends BaseEntity {
 
     @Column(length = 1024)
     private String avatarUrl;
+
+    /** Telegramdagi private chat ID. Faqat foydalanuvchi bir martalik link orqali botni bog'laganda yoziladi. */
+    @Column(unique = true)
+    private Long telegramChatId;
+
+    /** Telegram botda foydalanuvchi oxirgi qaysi ilova nomidan murojaat qilganini saqlaydi. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private SupportSource telegramSupportSource = SupportSource.GENERAL;
 
     @Column(nullable = false)
     private boolean active = true;
